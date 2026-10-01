@@ -30,8 +30,8 @@ Single operational view of implementation work. Detailed execution remains in in
 | Module | Task | Status |
 |---|---|---|
 | Foundation | Platform foundation | IN PROGRESS |
-| Authentication | Authentication | READY |
-| Projects | Projects | READY |
+| Authentication | Authentication | IN PROGRESS |
+| Projects | Projects | IN PROGRESS |
 
 ## M2 — Integration Engine
 | Module | Task | Status |
