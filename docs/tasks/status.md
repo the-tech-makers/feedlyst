@@ -29,7 +29,7 @@ Single operational view of implementation work. Detailed execution remains in in
 ## M1 — Platform Foundation
 | Module | Task | Status |
 |---|---|---|
-| Foundation | Platform foundation | READY |
+| Foundation | Platform foundation | IN PROGRESS |
 | Authentication | Authentication | READY |
 | Projects | Projects | READY |
 
