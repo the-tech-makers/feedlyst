@@ -64,3 +64,19 @@ Published Widget Versions are immutable. Editing affects draft state; publishing
 - data-model-integrations.md — integrations, connections, sources and synchronization.
 - data-model-widgets.md — normalized reviews, widgets, versions and publications.
 - data-model-billing.md — usage, plans, subscriptions, payments and entitlements.
+
+
+## Physical Schema Contract
+The detailed MVP PostgreSQL table contract is defined in `data-model-schema.md`. It is the source for the initial Prisma models and migrations.
+
+## Authentication Security Roadmap
+Basic authentication is part of the initial foundation. MFA/2FA is deliberately deferred until the second phase after the main site and initial integration flow are working.
+
+Phase 2 security should support:
+- Email OTP.
+- TOTP authenticator applications such as Google Authenticator, Microsoft Authenticator or compatible apps.
+- Recovery codes.
+- Per-user MFA enrollment and verification state.
+- Authentication challenge/rate-limit records with expiry and one-time-use semantics.
+
+MFA secrets and recovery codes must be encrypted/hashed appropriately and must never be logged or exposed to client-side application data.
