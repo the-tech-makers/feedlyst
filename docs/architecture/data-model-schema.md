@@ -276,21 +276,36 @@ Indexes: source_id, widget_id; widget_id, sort_order.
 Application rule: source and widget must belong to the same Account.
 
 ## 15. widget_versions
-Immutable widget configuration snapshots.
+Versioned widget configuration with exactly two active states in the MVP: DRAFT and PUBLISHED.
 
 | Column | Type | Null | Key / Rule |
 |---|---|---:|---|
 | id | UUID | NO | PK |
 | widget_id | UUID | NO | FK widgets.id |
-| version | INTEGER | NO | |
-| schema_version | INTEGER | NO | |
+| state | widget_version_state | NO | DRAFT or PUBLISHED |
+| version_number | INTEGER | NO | increment when a draft is published |
+| schema_version | INTEGER | NO | configuration schema version |
 | configuration | JSONB | NO | |
 | created_by | UUID | NO | FK users.id |
 | created_at | TIMESTAMPTZ | NO | |
+| updated_at | TIMESTAMPTZ | NO | |
 
-Constraints: UNIQUE(widget_id, version).
+Constraints:
+- UNIQUE(widget_id, state) — at most one DRAFT and one PUBLISHED row.
+- UNIQUE(widget_id, version_number).
 
-Indexes: widget_id, version DESC; created_by.
+Indexes:
+- widget_id, state
+- widget_id, version_number DESC
+
+Publishing behavior:
+1. Edit the DRAFT row.
+2. Validate the draft configuration.
+3. In one database transaction, copy/replace DRAFT into the PUBLISHED row and increment version_number.
+4. Publication becomes live only after the transaction succeeds.
+5. The previous published configuration is overwritten in the MVP.
+
+This intentionally does not retain unlimited widget version history. Historical versions can be added later if rollback/audit requirements justify it.
 
 ## 16. publications
 Public delivery endpoint.
@@ -424,11 +439,35 @@ Recommended:
 - sync_job_status: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
 - sync_run_status: RUNNING, COMPLETED, FAILED
 - widget_status: DRAFT, ACTIVE, ARCHIVED
+- widget_version_state: DRAFT, PUBLISHED
 - publication_status: UNPUBLISHED, PUBLISHED, DISABLED
 - plan_status: ACTIVE, ARCHIVED
 - billing_interval: MONTHLY, YEARLY
 - subscription_status: TRIALING, ACTIVE, PAST_DUE, CANCELLED, EXPIRED
 - payment_status: PENDING, SUCCEEDED, FAILED, REFUNDED
+
+## Account vs Project
+These are intentionally different:
+- Account = the customer/tenant that owns data, billing, integrations and users.
+- Project = one website/client workspace inside that Account.
+
+Example: an agency may have one Account called "ABC Agency" and Projects for "Client A", "Client B" and "Client C". A normal single-business customer may simply have one Account and one Project.
+
+This allows multiple websites to share the same customer billing and integrations without mixing their widgets and website settings.
+
+## Google Reviews Modeling Decision
+For Google Reviews, a Source represents one selected Google Business Profile location. The Source stores the provider location identity and metadata; Reviews store the individual normalized reviews.
+
+The MVP Review model intentionally keeps:
+- provider/source identity
+- provider review ID
+- reviewer display name/image
+- rating
+- review text/title where available
+- provider published/updated timestamps
+- provider metadata for fields that are useful but not common enough for the normalized contract
+
+Do not create Google-specific columns throughout the core model. Future providers should map into the same Review contract. Provider-specific data belongs in provider metadata or an integration-specific extension.
 
 ## MFA / 2FA — Deferred to Phase 2
 Do not add MFA tables to the MVP migration unless the selected authentication flow requires them.
