@@ -7,38 +7,70 @@ Single operational view of implementation work. Detailed execution remains in in
 - PLANNED — defined, dependencies may not be ready.
 - READY — dependencies satisfied; implementation can start.
 - IN PROGRESS — actively being implemented.
-- BLOCKED — waiting on a dependency or product/technical decision.
+- BLOCKED — waiting on a dependency or decision.
 - REVIEW — implementation complete; awaiting review or verification.
 - DONE — accepted, tested, and merged.
 - DEFERRED — intentionally moved to a later milestone.
 
-## Current Work
-
-### M0 — Product & Engineering Baseline
+## M0 — Product & Engineering Baseline
 | Module | Task | Status |
 |---|---|---|
 | Documentation | Documentation foundation | DONE |
 | Architecture | System boundaries | DONE |
+| Architecture | Core data model | DONE |
+| Architecture | Provider-neutral core ADR | DONE |
 | Design | Dashboard/page baseline | DONE |
+| Design | Shared design system | DONE |
+| Design | Widget editor specification | DONE |
 | Testing | Test strategy | DONE |
+| Testing | Test matrix | DONE |
+| Reference | Elfsight feature map | DONE |
 
-### M1 — Platform Foundation
+## M1 — Platform Foundation
 | Module | Task | Status |
 |---|---|---|
 | Foundation | Platform foundation | READY |
+| Authentication | Authentication | READY |
+| Projects | Projects | READY |
 
-### M2 — Integrations
+## M2 — Integration Engine
 | Module | Task | Status |
 |---|---|---|
+| Registry | Integration registry | PLANNED |
+| Connections | Connection lifecycle | PLANNED |
+| Synchronization | Background synchronization | PLANNED |
 | Google Reviews | Provider integration | PLANNED |
 
-### M3 — Widgets
+## M3 — Widget Engine
 | Module | Task | Status |
 |---|---|---|
+| Widget Core | Widget lifecycle/configuration | PLANNED |
+| Editor | Review widget editor | PLANNED |
 | Review Widget | Review widget MVP | PLANNED |
 
-## Rules
-- Update this board when task status changes.
-- A task may not be marked DONE without its acceptance criteria and tests completed.
-- Blocked tasks must document the blocker in the task file.
-- Completed work should retain its task document as historical evidence.
+## M4 — Publishing & Delivery
+| Module | Task | Status |
+|---|---|---|
+| Embed Runtime | Public widget runtime | PLANNED |
+| Installation | Embed/share installation | PLANNED |
+
+## M5 — Usage & Billing
+| Module | Task | Status |
+|---|---|---|
+| Usage | Usage metering | PLANNED |
+| Billing | Subscriptions | PLANNED |
+
+## M6 — Growth
+| Module | Task | Status |
+|---|---|---|
+| Integrations | Additional providers | DEFERRED |
+| Collaboration | Team/project members | DEFERRED |
+| Analytics | Advanced analytics | DEFERRED |
+| Agency | Client/white-label workflows | DEFERRED |
+| Enterprise | SSO/SCIM/audit controls | DEFERRED |
+
+## Operating Rules
+- Update this board whenever task status changes.
+- A task cannot be DONE without acceptance criteria and tests completed.
+- BLOCKED tasks must document the blocker.
+- Completed task files remain as historical implementation evidence.
