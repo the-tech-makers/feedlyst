@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db { provider = "postgresql" }
+
+enum user_status { ACTIVE SUSPENDED DELETED }
+enum account_status { ACTIVE SUSPENDED DELETED }
+enum membership_role { OWNER MEMBER }
+enum project_status { ACTIVE ARCHIVED }
+enum integration_status { ACTIVE DISABLED }
+enum connection_status { ACTIVE EXPIRED REVOKED ERROR }
+enum source_status { ACTIVE DISABLED ERROR }
+enum sync_job_status { PENDING RUNNING COMPLETED FAILED CANCELLED }
+enum sync_run_status { RUNNING COMPLETED FAILED }
+enum widget_status { DRAFT ACTIVE ARCHIVED }
+enum widget_version_state { DRAFT PUBLISHED }
+enum publication_status { UNPUBLISHED PUBLISHED DISABLED }
+enum plan_status { ACTIVE ARCHIVED }
+enum billing_interval { MONTHLY YEARLY }
+enum subscription_status { TRIALING ACTIVE PAST_DUE CANCELLED EXPIRED }
+enum payment_status { PENDING SUCCEEDED FAILED REFUNDED }
+
+model User {
+ id String @id @default(uuid()) @db.Uuid
+ email String @unique @db.VarChar(320)
+ name String? @db.VarChar(160)
+ imageUrl String? @map("image_url") @db.Text
+ emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+ status user_status @default(ACTIVE)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ memberships Membership[]
+ authAccounts AuthAccount[]
+ sessions Session[]
+ widgetsCreated WidgetVersion[]
+ @@index([status])
+ @@index([createdAt])
+ @@map("users")
+}
+model Account {
+ id String @id @default(uuid()) @db.Uuid
+ name String @db.VarChar(160)
+ slug String @unique @db.VarChar(80)
+ status account_status @default(ACTIVE)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ memberships Membership[]
+ projects Project[]
+ connections Connection[]
+ widgets Widget[]
+ usageEvents UsageEvent[]
+ subscriptions Subscription[]
+ payments Payment[]
+ @@index([status])
+ @@map("accounts")
+}
+model Membership {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ userId String @map("user_id") @db.Uuid
+ role membership_role @default(MEMBER)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ user User @relation(fields:[userId], references:[id], onDelete:Restrict)
+ @@unique([accountId,userId])
+ @@index([userId])
+ @@index([accountId,role])
+ @@map("memberships")
+}
+model AuthAccount {
+ id String @id @default(uuid()) @db.Uuid
+ userId String @map("user_id") @db.Uuid
+ provider String @db.VarChar(64)
+ providerAccountId String @map("provider_account_id") @db.VarChar(255)
+ accessTokenEncrypted String? @map("access_token_encrypted") @db.Text
+ refreshTokenEncrypted String? @map("refresh_token_encrypted") @db.Text
+ accessTokenExpiresAt DateTime? @map("access_token_expires_at") @db.Timestamptz(6)
+ scope String? @db.Text
+ tokenType String? @map("token_type") @db.VarChar(32)
+ idTokenEncrypted String? @map("id_token_encrypted") @db.Text
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+ @@unique([provider,providerAccountId])
+ @@index([userId])
+ @@map("auth_accounts")
+}
+model Session {
+ id String @id @default(uuid()) @db.Uuid
+ userId String @map("user_id") @db.Uuid
+ sessionToken String @unique @map("session_token") @db.VarChar(255)
+ expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+ @@index([userId])
+ @@index([expiresAt])
+ @@map("sessions")
+}
+model Project {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ name String @db.VarChar(160)
+ slug String @db.VarChar(80)
+ websiteUrl String? @map("website_url") @db.Text
+ status project_status @default(ACTIVE)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ widgets Widget[]
+ usageEvents UsageEvent[]
+ @@unique([accountId,slug])
+ @@index([accountId])
+ @@index([accountId,status])
+ @@map("projects")
+}
+model Integration {
+ id String @id @default(uuid()) @db.Uuid
+ key String @unique @db.VarChar(80)
+ name String @db.VarChar(120)
+ status integration_status @default(ACTIVE)
+ capabilities Json @default("{}")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ connections Connection[]
+ @@index([status])
+ @@map("integrations")
+}
+model Connection {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ integrationId String @map("integration_id") @db.Uuid
+ status connection_status
+ providerPrincipalId String? @map("provider_principal_id") @db.VarChar(255)
+ credentialsEncrypted String? @map("credentials_encrypted") @db.Text
+ scopes Json @default("[]")
+ expiresAt DateTime? @map("expires_at") @db.Timestamptz(6)
+ lastValidatedAt DateTime? @map("last_validated_at") @db.Timestamptz(6)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ integration Integration @relation(fields:[integrationId], references:[id], onDelete:Restrict)
+ sources Source[]
+ @@index([accountId])
+ @@index([accountId,integrationId])
+ @@index([integrationId,status])
+ @@index([providerPrincipalId])
+ @@map("connections")
+}
+model Source {
+ id String @id @default(uuid()) @db.Uuid
+ connectionId String @map("connection_id") @db.Uuid
+ externalId String @map("external_id") @db.VarChar(512)
+ name String @db.VarChar(255)
+ metadata Json @default("{}")
+ status source_status @default(ACTIVE)
+ lastSyncedAt DateTime? @map("last_synced_at") @db.Timestamptz(6)
+ syncCursor String? @map("sync_cursor") @db.Text
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ connection Connection @relation(fields:[connectionId], references:[id], onDelete:Restrict)
+ reviews Review[]
+ syncJobs SyncJob[]
+ syncRuns SyncRun[]
+ widgetSources WidgetSource[]
+ @@unique([connectionId,externalId])
+ @@index([connectionId])
+ @@index([connectionId,status])
+ @@index([status,lastSyncedAt])
+ @@map("sources")
+}
+model Review {
+ id String @id @default(uuid()) @db.Uuid
+ sourceId String @map("source_id") @db.Uuid
+ externalId String @map("external_id") @db.VarChar(512)
+ authorName String @map("author_name") @db.VarChar(255)
+ authorImageUrl String? @map("author_image_url") @db.Text
+ rating Int @db.SmallInt
+ title String? @db.VarChar(500)
+ body String? @db.Text
+ publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+ providerUpdatedAt DateTime? @map("provider_updated_at") @db.Timestamptz(6)
+ providerMetadata Json @map("provider_metadata") @default("{}")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ source Source @relation(fields:[sourceId], references:[id], onDelete:Restrict)
+ @@unique([sourceId,externalId])
+ @@index([sourceId,publishedAt(sort:Desc)])
+ @@index([sourceId,rating])
+ @@index([sourceId,providerUpdatedAt])
+ @@map("reviews")
+}
+model SyncJob {
+ id String @id @default(uuid()) @db.Uuid
+ sourceId String? @map("source_id") @db.Uuid
+ type String @db.VarChar(64)
+ status sync_job_status @default(PENDING)
+ priority Int @default(100) @db.SmallInt
+ attempts Int @default(0)
+ maxAttempts Int @default(5) @map("max_attempts") @db.SmallInt
+ scheduledAt DateTime @map("scheduled_at") @db.Timestamptz(6)
+ startedAt DateTime? @map("started_at") @db.Timestamptz(6)
+ completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+ lockedAt DateTime? @map("locked_at") @db.Timestamptz(6)
+ lastError String? @map("last_error") @db.Text
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ source Source? @relation(fields:[sourceId], references:[id], onDelete:SetNull)
+ syncRuns SyncRun[]
+ @@index([status,scheduledAt,priority])
+ @@index([sourceId,status])
+ @@index([status,lockedAt])
+ @@map("sync_jobs")
+}
+model SyncRun {
+ id String @id @default(uuid()) @db.Uuid
+ sourceId String @map("source_id") @db.Uuid
+ jobId String? @map("job_id") @db.Uuid
+ status sync_run_status
+ startedAt DateTime @map("started_at") @db.Timestamptz(6)
+ completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+ recordsRead Int @default(0) @map("records_read")
+ recordsCreated Int @default(0) @map("records_created")
+ recordsUpdated Int @default(0) @map("records_updated")
+ error String? @db.Text
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ source Source @relation(fields:[sourceId], references:[id], onDelete:Restrict)
+ job SyncJob? @relation(fields:[jobId], references:[id], onDelete:SetNull)
+ @@index([sourceId,startedAt(sort:Desc)])
+ @@index([jobId])
+ @@index([status,startedAt(sort:Desc)])
+ @@map("sync_runs")
+}
+model Widget {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ projectId String @map("project_id") @db.Uuid
+ type String @db.VarChar(80)
+ name String @db.VarChar(160)
+ status widget_status @default(DRAFT)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ project Project @relation(fields:[projectId], references:[id], onDelete:Restrict)
+ sources WidgetSource[]
+ versions WidgetVersion[]
+ publication Publication?
+ usageEvents UsageEvent[]
+ @@index([accountId,projectId])
+ @@index([projectId,status])
+ @@index([accountId,type])
+ @@map("widgets")
+}
+model WidgetSource {
+ widgetId String @map("widget_id") @db.Uuid
+ sourceId String @map("source_id") @db.Uuid
+ sortOrder Int @default(0) @map("sort_order")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ widget Widget @relation(fields:[widgetId], references:[id], onDelete:Cascade)
+ source Source @relation(fields:[sourceId], references:[id], onDelete:Cascade)
+ @@id([widgetId,sourceId])
+ @@index([sourceId,widgetId])
+ @@index([widgetId,sortOrder])
+ @@map("widget_sources")
+}
+model WidgetVersion {
+ id String @id @default(uuid()) @db.Uuid
+ widgetId String @map("widget_id") @db.Uuid
+ state widget_version_state
+ versionNumber Int @map("version_number")
+ schemaVersion Int @map("schema_version")
+ configuration Json
+ createdBy String @map("created_by") @db.Uuid
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ widget Widget @relation(fields:[widgetId], references:[id], onDelete:Cascade)
+ creator User @relation(fields:[createdBy], references:[id], onDelete:Restrict)
+ publication Publication?
+ @@unique([widgetId,state])
+ @@unique([widgetId,versionNumber])
+ @@index([widgetId,state])
+ @@index([widgetId,versionNumber(sort:Desc)])
+ @@map("widget_versions")
+}
+model Publication {
+ id String @id @default(uuid()) @db.Uuid
+ widgetId String @unique @map("widget_id") @db.Uuid
+ publicKey String @unique @map("public_key") @db.VarChar(64)
+ status publication_status @default(UNPUBLISHED)
+ activeVersionId String? @unique @map("active_version_id") @db.Uuid
+ allowedDomains Json @default("[]") @map("allowed_domains")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ widget Widget @relation(fields:[widgetId], references:[id], onDelete:Cascade)
+ activeVersion WidgetVersion? @relation(fields:[activeVersionId], references:[id], onDelete:SetNull)
+ usageEvents UsageEvent[]
+ @@index([status])
+ @@index([activeVersionId])
+ @@map("publications")
+}
+model UsageEvent {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ projectId String? @map("project_id") @db.Uuid
+ widgetId String? @map("widget_id") @db.Uuid
+ publicationId String? @map("publication_id") @db.Uuid
+ eventType String @map("event_type") @db.VarChar(64)
+ quantity Int @default(1)
+ occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
+ metadata Json @default("{}")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ project Project? @relation(fields:[projectId], references:[id], onDelete:SetNull)
+ widget Widget? @relation(fields:[widgetId], references:[id], onDelete:SetNull)
+ publication Publication? @relation(fields:[publicationId], references:[id], onDelete:SetNull)
+ @@index([accountId,occurredAt(sort:Desc)])
+ @@index([publicationId,occurredAt(sort:Desc)])
+ @@index([widgetId,occurredAt(sort:Desc)])
+ @@index([accountId,eventType,occurredAt(sort:Desc)])
+ @@map("usage_events")
+}
+model Plan {
+ id String @id @default(uuid()) @db.Uuid
+ key String @unique @db.VarChar(80)
+ name String @db.VarChar(120)
+ status plan_status
+ limits Json @default("{}")
+ priceMinor BigInt @map("price_minor")
+ currency String @db.Char(3)
+ billingInterval billing_interval @map("billing_interval")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ subscriptions Subscription[]
+ @@index([status])
+ @@map("plans")
+}
+model Subscription {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ planId String @map("plan_id") @db.Uuid
+ provider String @db.VarChar(32)
+ providerSubscriptionId String? @map("provider_subscription_id") @db.VarChar(255)
+ status subscription_status
+ currentPeriodStart DateTime? @map("current_period_start") @db.Timestamptz(6)
+ currentPeriodEnd DateTime? @map("current_period_end") @db.Timestamptz(6)
+ cancelAt DateTime? @map("cancel_at") @db.Timestamptz(6)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ plan Plan @relation(fields:[planId], references:[id], onDelete:Restrict)
+ payments Payment[]
+ @@index([accountId,status])
+ @@index([provider,providerSubscriptionId])
+ @@index([currentPeriodEnd])
+ @@map("subscriptions")
+}
+model Payment {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ subscriptionId String? @map("subscription_id") @db.Uuid
+ provider String @db.VarChar(32)
+ providerPaymentId String @map("provider_payment_id") @db.VarChar(255)
+ amountMinor BigInt @map("amount_minor")
+ currency String @db.Char(3)
+ status payment_status
+ paidAt DateTime? @map("paid_at") @db.Timestamptz(6)
+ metadata Json @default("{}")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Restrict)
+ subscription Subscription? @relation(fields:[subscriptionId], references:[id], onDelete:SetNull)
+ @@unique([provider,providerPaymentId])
+ @@index([accountId,createdAt(sort:Desc)])
+ @@index([subscriptionId,createdAt(sort:Desc)])
+ @@map("payments")
+}
+model VerificationToken {
+ identifier String @db.VarChar(320)
+ tokenHash String @unique @map("token_hash") @db.VarChar(255)
+ expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+ @@unique([identifier,tokenHash])
+ @@index([identifier,expiresAt])
+ @@index([expiresAt])
+ @@map("verification_tokens")
+}
