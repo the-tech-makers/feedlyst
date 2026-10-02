@@ -7,7 +7,7 @@ Single operational view of implementation work. Detailed execution remains in in
 - PLANNED — defined, dependencies may not be ready.
 - READY — dependencies satisfied; implementation can start.
 - IN PROGRESS — actively being implemented.
-- BLOCKED — waiting on a dependency or decision.
+- BLOCKED — waiting on dependency or decision.
 - REVIEW — implementation complete; awaiting review or verification.
 - DONE — accepted, tested, and merged.
 - DEFERRED — intentionally moved to a later milestone.
@@ -37,22 +37,22 @@ Single operational view of implementation work. Detailed execution remains in in
 | Module | Task | Status |
 |---|---|---|
 | Registry | Integration registry | DONE |
-| Connections | Connection lifecycle | PLANNED |
-| Synchronization | Background synchronization | PLANNED |
-| Google Reviews | Provider integration | PLANNED |
+| Connections | Connection lifecycle | IN PROGRESS |
+| Synchronization | Background synchronization | IN PROGRESS |
+| Google Reviews | Provider integration | IN PROGRESS |
 
 ## M3 — Widget Engine
 | Module | Task | Status |
 |---|---|---|
-| Widget Core | Widget lifecycle/configuration | PLANNED |
-| Editor | Review widget editor | PLANNED |
-| Review Widget | Review widget MVP | PLANNED |
+| Widget Core | Widget lifecycle/configuration | IN PROGRESS |
+| Editor | Review widget editor | IN PROGRESS |
+| Review Widget | Review widget MVP | IN PROGRESS |
 
 ## M4 — Publishing & Delivery
 | Module | Task | Status |
 |---|---|---|
-| Embed Runtime | Public widget runtime | PLANNED |
-| Installation | Embed/share installation | PLANNED |
+| Embed Runtime | Public widget runtime | IN PROGRESS |
+| Installation | Embed/share installation | IN PROGRESS |
 
 ## M5 — Usage & Billing
 | Module | Task | Status |
