@@ -18,10 +18,7 @@ export async function enqueueActiveGoogleSources() {
   for (const connection of connections) {
     for (const source of connection.sources) {
       const existing = await db.syncJob.findFirst({
-        where: {
-          sourceId: source.id,
-          status: { in: ["PENDING", "RUNNING"] },
-        },
+        where: { sourceId: source.id, status: { in: ["PENDING", "RUNNING"] } },
         select: { id: true },
       });
       if (existing) continue;
@@ -54,22 +51,14 @@ export async function processSyncJobs(limit = 10) {
 
   while (processed < limit) {
     const job = await db.syncJob.findFirst({
-      where: {
-        status: "PENDING",
-        scheduledAt: { lte: new Date() },
-        attempts: { lt: { not: undefined } as never },
-      },
+      where: { status: "PENDING", scheduledAt: { lte: new Date() } },
       orderBy: [{ priority: "asc" }, { scheduledAt: "asc" }],
       select: { id: true, sourceId: true, attempts: true, maxAttempts: true },
     });
     if (!job) break;
 
     const claimed = await db.syncJob.updateMany({
-      where: {
-        id: job.id,
-        status: "PENDING",
-        attempts: job.attempts,
-      },
+      where: { id: job.id, status: "PENDING", attempts: job.attempts },
       data: {
         status: "RUNNING",
         attempts: { increment: 1 },
@@ -85,11 +74,7 @@ export async function processSyncJobs(limit = 10) {
       await syncGoogleSource(job.sourceId);
       await db.syncJob.update({
         where: { id: job.id },
-        data: {
-          status: "COMPLETED",
-          completedAt: new Date(),
-          lockedAt: null,
-        },
+        data: { status: "COMPLETED", completedAt: new Date(), lockedAt: null },
       });
       succeeded += 1;
     } catch (error) {
@@ -99,7 +84,9 @@ export async function processSyncJobs(limit = 10) {
         where: { id: job.id },
         data: {
           status: retry ? "PENDING" : "FAILED",
-          scheduledAt: retry ? new Date(Date.now() + Math.min(60_000 * 2 ** (attempts - 1), 3_600_000)) : undefined,
+          scheduledAt: retry
+            ? new Date(Date.now() + Math.min(60_000 * 2 ** (attempts - 1), 3_600_000))
+            : undefined,
           completedAt: retry ? null : new Date(),
           lockedAt: null,
           lastError: error instanceof Error ? error.message : "SYNC_FAILED",
