@@ -13,20 +13,19 @@ export const GOOGLE_BUSINESS_PROFILE_SCOPES = [
   "https://www.googleapis.com/auth/business.manage",
 ] as const;
 
-function getGoogleConfig(): OAuthClientConfig {
+function getGoogleConfig(redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI ?? ""): OAuthClientConfig {
   return {
     authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     clientId: process.env.GOOGLE_CLIENT_ID ?? "",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    redirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? "",
+    redirectUri,
     scopes: GOOGLE_BUSINESS_PROFILE_SCOPES,
   };
 }
 
-export function buildGoogleAuthorizationUrl(state: string) {
-  const config = getGoogleConfig();
-  const url = buildOAuthAuthorizationUrl(config, state);
+export function buildGoogleAuthorizationUrl(state: string, redirectUri?: string) {
+  const url = buildOAuthAuthorizationUrl(getGoogleConfig(redirectUri), state);
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("prompt", "consent");
   return url;
