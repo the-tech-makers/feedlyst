@@ -85,7 +85,7 @@ export async function updateReviewWidgetDraft(input: {
       type: "review",
       project: { account: { memberships: { some: { userId: input.userId } } } },
     },
-    select: { id: true, accountId: true, projectId: true },
+    select: { id: true, accountId: true },
   });
   if (!widget) throw new Error("WIDGET_NOT_FOUND");
 
@@ -125,10 +125,12 @@ export async function updateReviewWidgetDraft(input: {
       }
     }
 
-    await tx.widget.update({
-      where: { id: widget.id },
-      data: input.name === undefined ? undefined : { name: input.name.trim() },
-    });
+    if (input.name !== undefined) {
+      await tx.widget.update({
+        where: { id: widget.id },
+        data: { name: input.name.trim() },
+      });
+    }
 
     return tx.widgetVersion.update({
       where: { id: draft.id },
@@ -155,14 +157,25 @@ export async function publishReviewWidget(widgetId: string, userId: string) {
   if (!draft) throw new Error("WIDGET_DRAFT_NOT_FOUND");
 
   return db.$transaction(async (tx) => {
-    await tx.widgetVersion.updateMany({
+    await tx.widgetVersion.deleteMany({
       where: { widgetId, state: "PUBLISHED" },
-      data: { state: "DRAFT" },
     });
 
     const published = await tx.widgetVersion.update({
       where: { id: draft.id },
       data: { state: "PUBLISHED" },
+    });
+
+    const nextVersionNumber = draft.versionNumber + 1;
+    await tx.widgetVersion.create({
+      data: {
+        widgetId,
+        state: "DRAFT",
+        versionNumber: nextVersionNumber,
+        schemaVersion: draft.schemaVersion,
+        configuration: draft.configuration,
+        createdBy: userId,
+      },
     });
 
     await tx.widget.update({
