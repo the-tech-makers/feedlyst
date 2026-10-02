@@ -28,6 +28,7 @@ export type AgentEvent =
   | { type: "complete"; taskId: string };
 
 export type AgentToolName =
+  | "repository.create_branch"
   | "repository.inspect"
   | "repository.edit"
   | "repository.commit"
