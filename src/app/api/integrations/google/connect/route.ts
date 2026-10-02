@@ -25,14 +25,11 @@ export async function GET(request: Request) {
     });
 
     const state = await createOAuthState(account.id, integration.id);
-    const url = buildGoogleAuthorizationUrl(state);
-    const origin = new URL(request.url).origin;
-    const configuredRedirect = process.env.GOOGLE_OAUTH_REDIRECT_URI;
-    if (!configuredRedirect) {
-      url.searchParams.set("redirect_uri", new URL("/api/integrations/google/callback", origin).toString());
-    }
+    const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI
+      ?? new URL("/api/integrations/google/callback", request.url).toString();
+    const authorizationUrl = buildGoogleAuthorizationUrl(state, redirectUri);
 
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(authorizationUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     return NextResponse.json(
