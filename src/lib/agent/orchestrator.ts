@@ -91,6 +91,7 @@ export class AutonomousAgent {
     goal: string;
     repositorySummary: string;
     completedTasks?: AgentTask[];
+    branch: string;
   }): Promise<AgentEvent[]> {
     const events: AgentEvent[] = [];
     const completedTasks = input.completedTasks ?? [];
@@ -119,7 +120,7 @@ export class AutonomousAgent {
     task.status = "RUNNING";
 
     for (task.attempts = 1; task.attempts <= this.policy.maxAttemptsPerTask; task.attempts++) {
-      const action = await this.executeTask(task);
+      const action = await this.executeTask(task, input.branch);
       events.push({ type: "action", taskId: task.id, action: action.summary });
 
       const testResult = await this.tools.get("tests.run")?.execute({ taskId: task.id });
@@ -152,13 +153,13 @@ export class AutonomousAgent {
 
       const implementation = await this.model.implement({
         task,
-        repository: { branch: task.id },
+        repository: { branch: input.branch },
         findings: review.findings,
         testDetails: String(testResult.details ?? ""),
       });
       await this.tools.get("repository.edit")?.execute({
         taskId: task.id,
-        branch: String(task.id),
+        branch: input.branch,
         edits: implementation.edits,
         summary: implementation.summary,
       });
@@ -167,10 +168,11 @@ export class AutonomousAgent {
     return events;
   }
 
-  private async executeTask(task: AgentTask): Promise<{ summary: string }> {
+  private async executeTask(task: AgentTask, branch: string): Promise<{ summary: string }> {
     const inspect = await this.tools.get("repository.inspect")?.execute({
       taskId: task.id,
       objective: task.objective,
+      branch,
     });
     if (!inspect) throw new Error("repository.inspect tool is not configured");
 
@@ -180,7 +182,7 @@ export class AutonomousAgent {
     });
     const edit = await this.tools.get("repository.edit")?.execute({
       taskId: task.id,
-      branch: inspect.branch,
+      branch,
       edits: implementation.edits,
       summary: implementation.summary,
     });
