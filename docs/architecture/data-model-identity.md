@@ -71,3 +71,11 @@ sessionToken must be unique.
 Project, Connection, Widget, Publication, Usage and Billing records must resolve to an Account.
 
 Account deletion is a controlled lifecycle operation. It must not be an accidental cascade from an ordinary user operation.
+
+
+## MVP Authentication Strategy
+Feedlyst uses Auth.js with JWT sessions for the MVP. The custom Feedlyst authentication tables are not used as an Auth.js database-session adapter.
+
+Credential passwords are stored only as salted bcrypt hashes in User.passwordHash. Password hashes are never returned to clients or logged. JWTs carry the authenticated Feedlyst User ID; every protected application service resolves tenant access through Membership records.
+
+Email verification, password reset, rate limiting and MFA are follow-up security work and must be completed before the authentication milestone is marked DONE.
