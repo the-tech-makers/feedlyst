@@ -141,6 +141,27 @@ export class AutonomousAgent {
       events.push({ type: "review", taskId: task.id, ...review });
 
       if (testsPassed && review.passed) {
+        const preview = await this.tools.get("deployment.create_preview")?.execute({ branch: input.branch });
+        if (!preview) throw new Error("deployment.create_preview tool is not configured");
+
+        const deployment = await this.tools.get("deployment.inspect")?.execute({
+          deploymentId: preview.deployment?.id,
+        });
+        if (!deployment) throw new Error("deployment.inspect tool is not configured");
+
+        const verification = await this.tools.get("deployment.verify")?.execute({
+          url: deployment.url,
+        });
+        if (!verification?.passed) {
+          events.push({
+            type: "test",
+            taskId: task.id,
+            passed: false,
+            details: String(verification?.details ?? "Preview verification failed"),
+          });
+          continue;
+        }
+
         task.status = "PASSED";
         events.push({ type: "complete", taskId: task.id });
         return events;
