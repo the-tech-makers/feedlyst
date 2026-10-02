@@ -35,7 +35,7 @@ export default async function WidgetEditorPage({
   if (!draft) notFound();
 
   const sources = await db.source.findMany({
-    where: { connection: { accountId: widget.project.id ? widget.accountId : widget.accountId }, status: "ACTIVE" },
+    where: { connection: { accountId: widget.accountId }, status: "ACTIVE" },
     orderBy: { name: "asc" },
     select: { id: true, name: true, externalId: true },
   });
