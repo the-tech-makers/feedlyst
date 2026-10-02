@@ -3,24 +3,90 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-datasource db { provider = "postgresql" }
+datasource db {
+  provider = "postgresql"
+}
 
-enum user_status { ACTIVE SUSPENDED DELETED }
-enum account_status { ACTIVE SUSPENDED DELETED }
-enum membership_role { OWNER MEMBER }
-enum project_status { ACTIVE ARCHIVED }
-enum integration_status { ACTIVE DISABLED }
-enum connection_status { ACTIVE EXPIRED REVOKED ERROR }
-enum source_status { ACTIVE DISABLED ERROR }
-enum sync_job_status { PENDING RUNNING COMPLETED FAILED CANCELLED }
-enum sync_run_status { RUNNING COMPLETED FAILED }
-enum widget_status { DRAFT ACTIVE ARCHIVED }
-enum widget_version_state { DRAFT PUBLISHED }
-enum publication_status { UNPUBLISHED PUBLISHED DISABLED }
-enum plan_status { ACTIVE ARCHIVED }
-enum billing_interval { MONTHLY YEARLY }
-enum subscription_status { TRIALING ACTIVE PAST_DUE CANCELLED EXPIRED }
-enum payment_status { PENDING SUCCEEDED FAILED REFUNDED }
+enum user_status {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+enum account_status {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+enum membership_role {
+  OWNER
+  MEMBER
+}
+enum project_status {
+  ACTIVE
+  ARCHIVED
+}
+enum integration_status {
+  ACTIVE
+  DISABLED
+}
+enum connection_status {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  ERROR
+}
+enum source_status {
+  ACTIVE
+  DISABLED
+  ERROR
+}
+enum sync_job_status {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+enum sync_run_status {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+enum widget_status {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+enum widget_version_state {
+  DRAFT
+  PUBLISHED
+}
+enum publication_status {
+  UNPUBLISHED
+  PUBLISHED
+  DISABLED
+}
+enum plan_status {
+  ACTIVE
+  ARCHIVED
+}
+enum billing_interval {
+  MONTHLY
+  YEARLY
+}
+enum subscription_status {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+enum payment_status {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
 
 model User {
  id String @id @default(uuid()) @db.Uuid
