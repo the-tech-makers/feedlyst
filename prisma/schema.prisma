@@ -35,6 +35,11 @@ enum connection_status {
   REVOKED
   ERROR
 }
+enum oauth_state_status {
+  ACTIVE
+  CONSUMED
+  EXPIRED
+}
 enum source_status {
   ACTIVE
   DISABLED
@@ -116,6 +121,7 @@ model Account {
  memberships Membership[]
  projects Project[]
  connections Connection[]
+ oauthStates OAuthState[]
  widgets Widget[]
  usageEvents UsageEvent[]
  subscriptions Subscription[]
@@ -194,6 +200,21 @@ model Integration {
  connections Connection[]
  @@index([status])
  @@map("integrations")
+}
+model OAuthState {
+ id String @id @default(uuid()) @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ integrationId String @map("integration_id") @db.Uuid
+ stateHash String @unique @map("state_hash") @db.VarChar(128)
+ expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+ status oauth_state_status @default(ACTIVE)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+ account Account @relation(fields:[accountId], references:[id], onDelete:Cascade)
+ integration Integration @relation(fields:[integrationId], references:[id], onDelete:Cascade)
+ @@index([accountId,integrationId])
+ @@index([expiresAt,status])
+ @@map("oauth_states")
 }
 model Connection {
  id String @id @default(uuid()) @db.Uuid
