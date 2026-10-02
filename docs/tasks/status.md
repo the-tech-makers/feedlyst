@@ -36,7 +36,7 @@ Single operational view of implementation work. Detailed execution remains in in
 ## M2 — Integration Engine
 | Module | Task | Status |
 |---|---|---|
-| Registry | Integration registry | PLANNED |
+| Registry | Integration registry | IN PROGRESS |
 | Connections | Connection lifecycle | PLANNED |
 | Synchronization | Background synchronization | PLANNED |
 | Google Reviews | Provider integration | PLANNED |
