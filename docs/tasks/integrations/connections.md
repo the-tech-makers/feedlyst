@@ -4,7 +4,7 @@
 Implementation contract for the Connections module in M2.
 
 ## Status
-PLANNED
+IN PROGRESS
 
 ## Objective
 Implement secure provider connection lifecycle.
@@ -22,4 +22,4 @@ Integration registry and authentication.
 - OAuth success/failure; token refresh; invalid state; disconnect; secret scanning.
 
 ## Completion
-Pending.
+Connection encryption, OAuth state persistence/consumption, and connection lifecycle services are implemented. Provider-specific OAuth adapters and tests remain.
