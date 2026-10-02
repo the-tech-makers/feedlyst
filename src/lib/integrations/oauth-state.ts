@@ -22,18 +22,29 @@ export async function createOAuthState(accountId: string, integrationId: string)
 }
 
 export async function consumeOAuthState(state: string) {
+  const now = new Date();
   const record = await db.oAuthState.findUnique({
     where: { stateHash: hashState(state) },
+    select: { id: true, accountId: true, integrationId: true, expiresAt: true, status: true },
   });
 
-  if (!record || record.status !== "ACTIVE" || record.expiresAt <= new Date()) {
+  if (!record || record.status !== "ACTIVE" || record.expiresAt <= now) {
     throw new Error("INVALID_OAUTH_STATE");
   }
 
-  await db.oAuthState.update({
-    where: { id: record.id },
-    data: { status: "CONSUMED", consumedAt: new Date() },
+  const consumed = await db.oAuthState.updateMany({
+    where: {
+      id: record.id,
+      status: "ACTIVE",
+      expiresAt: { gt: now },
+    },
+    data: {
+      status: "CONSUMED",
+      consumedAt: now,
+    },
   });
+
+  if (consumed.count !== 1) throw new Error("INVALID_OAUTH_STATE");
 
   return { accountId: record.accountId, integrationId: record.integrationId };
 }
