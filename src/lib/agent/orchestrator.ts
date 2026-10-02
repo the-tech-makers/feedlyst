@@ -52,6 +52,12 @@ export interface AgentModel {
     task: Omit<AgentTask, "id" | "status" | "attempts" | "approvals">;
     requiresApproval?: AgentApproval;
   }>;
+  implement(input: {
+    task: AgentTask;
+    repository: Record<string, unknown>;
+    findings?: string[];
+    testDetails?: string;
+  }): Promise<{ edits: Array<{ path: string; content: string; message?: string }>; summary: string }>;
   review(input: {
     task: AgentTask;
     diff: string;
@@ -144,10 +150,17 @@ export class AutonomousAgent {
         return events;
       }
 
+      const implementation = await this.model.implement({
+        task,
+        repository: { branch: task.id },
+        findings: review.findings,
+        testDetails: String(testResult.details ?? ""),
+      });
       await this.tools.get("repository.edit")?.execute({
         taskId: task.id,
-        findings: review.findings,
-        testDetails: testResult.details,
+        branch: String(task.id),
+        edits: implementation.edits,
+        summary: implementation.summary,
       });
     }
 
@@ -161,10 +174,15 @@ export class AutonomousAgent {
     });
     if (!inspect) throw new Error("repository.inspect tool is not configured");
 
+    const implementation = await this.model.implement({
+      task,
+      repository: inspect,
+    });
     const edit = await this.tools.get("repository.edit")?.execute({
       taskId: task.id,
-      objective: task.objective,
-      repository: inspect,
+      branch: inspect.branch,
+      edits: implementation.edits,
+      summary: implementation.summary,
     });
     if (!edit) throw new Error("repository.edit tool is not configured");
 
