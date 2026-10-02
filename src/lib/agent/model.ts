@@ -7,8 +7,7 @@ type ModelResponse = {
     title: string;
     objective: string;
   };
-  requiresApproval?: AgentModel extends never ? never : 
-    "production_deploy" | "destructive_migration" | "substantial_delete" |
+  requiresApproval?: "production_deploy" | "destructive_migration" | "substantial_delete" |
     "billing_or_credentials" | "ambiguous_requirement" | "repeated_failure";
 };
 
