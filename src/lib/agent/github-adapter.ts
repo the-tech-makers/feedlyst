@@ -29,6 +29,21 @@ async function github(path: string, init?: RequestInit) {
 export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
   const tools = new Map<AgentTool["name"], AgentTool>();
 
+  tools.set("repository.create_branch", {
+    name: "repository.create_branch",
+    async execute(input) {
+      const branch = String(input.branch);
+      const base = String(input.base ?? "main");
+      if (!branch) throw new Error("repository.create_branch requires branch.");
+      const ref = await github(`/git/ref/heads/${encodeURIComponent(base)}`);
+      const created = await github("/git/refs", {
+        method: "POST",
+        body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: ref.object.sha }),
+      });
+      return { branch, sha: created.object?.sha ?? ref.object.sha };
+    },
+  });
+
   tools.set("repository.inspect", {
     name: "repository.inspect",
     async execute(input) {
