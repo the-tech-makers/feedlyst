@@ -7,7 +7,7 @@ import {
   normalizeGoogleCredentials,
   GOOGLE_INTEGRATION_KEY,
 } from "@/lib/integrations/google";
-import { encryptSecret } from "@/lib/security/encryption";
+import { decryptSecret, encryptSecret } from "@/lib/security/encryption";
 
 function redirectToDashboard(request: Request, status: string) {
   const url = new URL("/dashboard", request.url);
@@ -39,13 +39,17 @@ export async function GET(request: Request) {
       select: { id: true, credentialsEncrypted: true },
     });
 
-    const refreshToken = credentials.refreshToken ?? (
-      existing?.credentialsEncrypted
-        ? (JSON.parse((await import("@/lib/security/encryption")).decryptSecret(existing.credentialsEncrypted)) as { refreshToken?: string }).refreshToken
-        : undefined
-    );
+    let previousRefreshToken: string | undefined;
+    if (existing?.credentialsEncrypted) {
+      const previous = JSON.parse(decryptSecret(existing.credentialsEncrypted)) as { refreshToken?: string };
+      previousRefreshToken = previous.refreshToken;
+    }
 
-    const storedCredentials = { ...credentials, refreshToken };
+    const storedCredentials = {
+      ...credentials,
+      refreshToken: credentials.refreshToken ?? previousRefreshToken,
+    };
+    const scopes = tokens.scope ? tokens.scope.split(" ").filter(Boolean) : [];
 
     if (existing) {
       await db.connection.update({
@@ -53,7 +57,7 @@ export async function GET(request: Request) {
         data: {
           status: "ACTIVE",
           credentialsEncrypted: encryptSecret(JSON.stringify(storedCredentials)),
-          scopes: [...GOOGLE_INTEGRATION_KEY ? (tokens.scope ? tokens.scope.split(" ") : []) : []],
+          scopes,
           expiresAt: getGoogleTokenExpiry(tokens.expires_in),
           lastValidatedAt: new Date(),
         },
@@ -65,7 +69,7 @@ export async function GET(request: Request) {
           integrationId: integration.id,
           status: "ACTIVE",
           credentialsEncrypted: encryptSecret(JSON.stringify(storedCredentials)),
-          scopes: tokens.scope ? tokens.scope.split(" ") : [],
+          scopes,
           expiresAt: getGoogleTokenExpiry(tokens.expires_in),
           lastValidatedAt: new Date(),
         },
