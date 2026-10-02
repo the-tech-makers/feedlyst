@@ -4,7 +4,7 @@
 Implementation contract for the Integration Registry module in M2.
 
 ## Status
-IN PROGRESS
+DONE
 
 ## Objective
 Create the provider-neutral integration contract.
@@ -22,4 +22,4 @@ Platform foundation.
 - Registry validation; adapter contract tests.
 
 ## Completion
-Registry contract and validation are implemented. Provider adapter registration and contract tests remain.
+Registry contract, validation, and adapter contract tests are implemented.
