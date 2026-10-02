@@ -94,7 +94,6 @@ model User {
  passwordHash String? @map("password_hash") @db.Text
  name String? @db.VarChar(160)
  imageUrl String? @map("image_url") @db.Text
- passwordHash String? @map("password_hash") @db.Text
  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
  status user_status @default(ACTIVE)
  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
