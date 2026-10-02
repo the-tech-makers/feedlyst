@@ -4,7 +4,7 @@
 Implementation contract for the Widget Core module in M3.
 
 ## Status
-PLANNED
+IN PROGRESS
 
 ## Objective
 Implement widget lifecycle and versioned configuration.
@@ -22,4 +22,4 @@ Normalized data and projects.
 - Lifecycle; schema validation; version transitions; authorization.
 
 ## Completion
-Pending.
+Configuration schema validation and core draft/publish lifecycle are implemented. Lifecycle and authorization tests remain.
