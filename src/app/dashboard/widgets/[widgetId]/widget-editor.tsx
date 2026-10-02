@@ -44,18 +44,7 @@ export default function WidgetEditor({
   const [status, setStatus] = useState("Saved");
   const [publishing, setPublishing] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(async () => {
-      setStatus("Saving…");
-      const response = await fetch(`/api/widgets/${widget.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, sourceIds, configuration: config }),
-      });
-      setStatus(response.ok ? "Saved" : "Save failed");
-    }, 500);
-    return () => window.clearTimeout(timer);
-  }, [widget.id, name, sourceIds, config]);
+  const [hydrated, setHydrated] = useState(false);\n\n  useEffect(() => {\n    setHydrated(true);\n  }, []);\n\n  useEffect(() => {\n    if (!hydrated) return;\n    const timer = window.setTimeout(async () => {\n      setStatus("Saving…");\n      try {\n        const response = await fetch(`/api/widgets/${widget.id}`, {\n          method: "PATCH",\n          headers: { "Content-Type": "application/json" },\n          body: JSON.stringify({ name, sourceIds, configuration: config }),\n        });\n        setStatus(response.ok ? "Saved" : "Save failed");\n      } catch {\n        setStatus("Save failed");\n      }\n    }, 500);\n    return () => window.clearTimeout(timer);\n  }, [hydrated, widget.id, name, sourceIds, config]);
 
   async function publish() {
     setPublishing(true);
