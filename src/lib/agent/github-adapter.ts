@@ -101,14 +101,32 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
       const target = workflows.workflows?.find((w: { name: string }) => w.name === workflow);
       if (!target) throw new Error("Agent Verify workflow not found.");
 
+      const before = await github(`/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&per_page=5`);
+      const known = new Set((before.workflow_runs ?? []).map((run: { id: number }) => run.id));
+
       await github(`/actions/workflows/${target.id}/dispatches`, {
         method: "POST",
         body: JSON.stringify({ ref: branch, inputs: { ref: branch } }),
       });
 
+      for (let attempt = 0; attempt < 30; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const runs = await github(`/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&per_page=5`);
+        const run = (runs.workflow_runs ?? []).find((candidate: { id: number }) => !known.has(candidate.id));
+        if (!run) continue;
+
+        if (run.status === "completed") {
+          return {
+            passed: run.conclusion === "success",
+            details: `Agent Verify workflow ${run.conclusion}. Run ${run.id}.`,
+            workflowRunId: run.id,
+          };
+        }
+      }
+
       return {
-        passed: true,
-        details: "Verification workflow dispatched; deployment verification must remain pending until the run completes.",
+        passed: false,
+        details: "Agent Verify workflow did not complete within the verification window.",
         workflowDispatched: true,
       };
     },
