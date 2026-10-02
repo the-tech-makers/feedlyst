@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     branch?: string;
   };
 
-  if (!body.goal || !body.branch) {
-    return NextResponse.json({ error: "goal and branch are required" }, { status: 400 });
+  if (!body.goal) {
+    return NextResponse.json({ error: "goal is required" }, { status: 400 });
   }
 
   const tools = new Map([
@@ -32,19 +32,22 @@ export async function POST(request: Request) {
     ...createVercelTools(),
   ]);
 
+  const branch = body.branch ?? `agent/autonomous-${Date.now()}`;
+  await tools.get("repository.create_branch")!.execute({ branch, base: "main" });
+
   const inspected = await tools.get("repository.inspect")!.execute({
-    branch: body.branch,
+    branch,
   });
 
   const agent = new AutonomousAgent(agentModel, tools, autonomousAgentPolicy);
   const events = await agent.run({
     goal: body.goal,
-    branch: body.branch,
+    branch,
     repositorySummary: JSON.stringify(inspected),
   });
 
   return NextResponse.json({
-    branch: body.branch,
+    branch,
     events,
     completed: events.some((event) => event.type === "complete"),
     approvalRequired: events.find((event) => event.type === "approval") ?? null,
