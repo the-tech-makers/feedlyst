@@ -3,6 +3,7 @@ import "server-only";
 import type { AgentModel } from "./orchestrator";
 
 type ModelResponse = {
+  edits?: Array<{ path: string; content: string; message?: string }>;
   task: {
     title: string;
     objective: string;
@@ -57,6 +58,38 @@ async function complete(prompt: string): Promise<ModelResponse> {
 }
 
 export const agentModel: AgentModel = {
+  async implement(input) {
+    const result = await complete(`Implement exactly one bounded engineering task.
+
+Task:
+${JSON.stringify(input.task)}
+
+Repository inspection:
+${JSON.stringify(input.repository)}
+
+Prior review findings:
+${JSON.stringify(input.findings ?? [])}
+
+Prior test details:
+${input.testDetails ?? ""}
+
+Return JSON:
+{
+  "task": {"title": "implementation", "objective": "implementation"},
+  "requiresApproval": null,
+  "edits": [
+    {"path": "existing/or/new/file.ts", "content": "complete file content", "message": "commit message"}
+  ]
+}
+
+Return complete file contents, not diffs. Keep changes narrowly scoped. Never add secrets.`);
+    const raw = result as ModelResponse & { edits?: Array<{ path: string; content: string; message?: string }> };
+    return {
+      edits: raw.edits ?? [],
+      summary: raw.task.objective,
+    };
+  },
+
   async plan(input) {
     return complete(`Plan exactly one next engineering task.
 
