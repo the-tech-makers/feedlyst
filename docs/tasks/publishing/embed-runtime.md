@@ -4,7 +4,7 @@
 Implementation contract for the Embed Runtime module in M4.
 
 ## Status
-PLANNED
+REVIEW
 
 ## Objective
 Deliver published widgets to anonymous external visitors.
@@ -22,4 +22,4 @@ Published widget model and CDN/cache infrastructure.
 - External-origin E2E; timeout; malformed config; unpublished ID; performance.
 
 ## Completion
-Pending.
+Implementation complete; verification remains.
