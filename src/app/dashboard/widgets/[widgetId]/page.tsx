@@ -34,6 +34,24 @@ export default async function WidgetEditorPage({
   const draft = widget.versions[0];
   if (!draft) notFound();
 
+  const previewSourceIds = widget.sources.map((item) => item.sourceId);
+  const previewReviews = previewSourceIds.length
+    ? await db.review.findMany({
+        where: { sourceId: { in: previewSourceIds } },
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        take: 50,
+        select: {
+          id: true,
+          authorName: true,
+          authorImageUrl: true,
+          rating: true,
+          title: true,
+          body: true,
+          publishedAt: true,
+        },
+      })
+    : [];
+
   const sources = await db.source.findMany({
     where: { connection: { accountId: widget.accountId }, status: "ACTIVE" },
     orderBy: { name: "asc" },
@@ -60,6 +78,7 @@ export default async function WidgetEditorPage({
 
   return (
     <WidgetEditor
+      previewReviews={previewReviews}
       widget={{
         id: widget.id,
         name: widget.name,
