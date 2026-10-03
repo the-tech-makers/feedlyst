@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatPlanPrice, getCurrentSubscription, listActivePlans } from "@/lib/billing/service";
+import { BillingActions } from "./billing-actions";
 
 export default async function BillingPage() {
   const session = await auth();
@@ -18,6 +19,7 @@ export default async function BillingPage() {
     <p className="text-sm text-slate-500">Billing</p>
     <h1 className="text-3xl font-semibold text-slate-950">Plans & subscription</h1>
     <p className="mt-2 text-slate-600">Your plan controls the usage limits available to this account.</p>
+    <p className="mt-3 text-xs text-slate-500">Checkout is handled securely by Razorpay. Your card or UPI details are never stored by Feedlyst.</p>
 
     {subscription && <section className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
       <p className="text-sm text-slate-500">Current subscription</p>
@@ -37,7 +39,7 @@ export default async function BillingPage() {
             <div key={key} className="flex justify-between gap-4"><dt>{key.replace(/([A-Z])/g, " $1")}</dt><dd className="font-medium text-slate-900">{String(value)}</dd></div>
           )}
         </dl>
-        <button disabled className="mt-6 w-full rounded-lg border px-4 py-2 text-sm text-slate-500" title="Payment provider checkout is not connected yet">Choose plan</button>
+        <BillingActions planId={plan.id} />
       </article>)}
     </section>
 
