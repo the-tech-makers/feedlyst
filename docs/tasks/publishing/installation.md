@@ -4,7 +4,7 @@
 Implementation contract for the Installation module in M4.
 
 ## Status
-PLANNED
+REVIEW
 
 ## Objective
 Provide installation and share experiences for published widgets.
@@ -22,4 +22,4 @@ Embed runtime.
 - HTML; supported CMS flows; invalid domain; copied code validation.
 
 ## Completion
-Pending.
+Implementation complete; verification remains.
