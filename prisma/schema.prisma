@@ -411,6 +411,22 @@ model UsageEvent {
  @@index([accountId,eventType,occurredAt(sort:Desc)])
  @@map("usage_events")
 }
+model BillingWebhookEvent {
+ id String @id @default(uuid()) @db.Uuid
+ provider String @db.VarChar(32)
+ providerEventId String @map("provider_event_id") @db.VarChar(255)
+ eventType String @map("event_type") @db.VarChar(128)
+ payload Json @default("{}")
+ processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+ error String? @db.Text
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ accountId String? @map("account_id") @db.Uuid
+ account Account? @relation(fields:[accountId], references:[id], onDelete:SetNull)
+ @@unique([provider,providerEventId])
+ @@index([provider,createdAt(sort:Desc)])
+ @@index([processedAt])
+ @@map("billing_webhook_events")
+}
 model Plan {
  id String @id @default(uuid()) @db.Uuid
  key String @unique @db.VarChar(80)
@@ -418,6 +434,7 @@ model Plan {
  status plan_status
  limits Json @default("{}")
  priceMinor BigInt @map("price_minor")
+ providerPlanId String? @map("provider_plan_id") @db.VarChar(255)
  currency String @db.Char(3)
  billingInterval billing_interval @map("billing_interval")
  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
