@@ -11,8 +11,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
     });
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
     return NextResponse.json({ project });
-  } catch {
-    return NextResponse.json({ error: "Request failed" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return NextResponse.json(
+      { error: message === "UNAUTHENTICATED" ? "Unauthorized" : "Request failed" },
+      { status: message === "UNAUTHENTICATED" ? 401 : 500 },
+    );
   }
 }
 
@@ -36,7 +40,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
       },
     });
     return NextResponse.json({ project });
-  } catch {
-    return NextResponse.json({ error: "Request failed" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return NextResponse.json(
+      { error: message === "UNAUTHENTICATED" ? "Unauthorized" : "Request failed" },
+      { status: message === "UNAUTHENTICATED" ? 401 : 500 },
+    );
   }
 }
