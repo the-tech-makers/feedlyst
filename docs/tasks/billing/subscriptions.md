@@ -4,22 +4,26 @@
 Implementation contract for the Subscriptions module in M5.
 
 ## Status
-PLANNED
+IN PROGRESS
 
 ## Objective
-Implement plan and subscription state management.
+Implement provider-neutral plan and subscription state management.
 
 ## Scope
-Plans, checkout/customer portal integration, webhook reconciliation, trial, upgrade/downgrade, cancellation.
+Plans, current subscription lookup, payment idempotency, status transitions, usage-limit integration, billing dashboard, and provider adapter boundary.
 
 ## Dependencies
 Usage metering and selected payment provider.
 
 ## Acceptance Criteria
-- Dashboard and runtime enforce the same authoritative subscription state.
+- Dashboard exposes the account's current subscription and active plan catalog.
+- Subscription state remains independent of a payment provider.
+- Payment records are idempotent by provider and provider payment ID.
+- Usage limits derive from the active plan.
+- Tenant access is enforced through account membership.
 
 ## Tests
-- Webhook signatures; replay; state transitions; failed payment; cancellation.
+- Plan lookup; active subscription lookup; payment idempotency; status transitions; usage-limit lookup; tenant isolation.
 
 ## Completion
-Pending.
+Provider-neutral billing foundation is implemented. Checkout/customer portal, signed webhook reconciliation, trial automation, and plan-change flows remain pending.
