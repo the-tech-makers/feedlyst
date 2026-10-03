@@ -34,13 +34,19 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const account = await db.$transaction(async (tx) => {
+  let account;
+  try {
+    account = await db.$transaction(async (tx) => {
     const user = await tx.user.create({ data: { email, name, passwordHash } });
     const createdAccount = await tx.account.create({ data: { name: accountName, slug } });
     await tx.membership.create({ data: { accountId: createdAccount.id, userId: user.id, role: "OWNER" } });
     await tx.project.create({ data: { accountId: createdAccount.id, name: accountName, slug: "default" } });
-    return createdAccount;
-  });
+      return createdAccount;
+    });
+  } catch (error) {
+    console.error("Registration failed", error);
+    return jsonError("Registration is temporarily unavailable. Please try again later.", 503);
+  }
 
   return NextResponse.json({ accountId: account.id }, { status: 201 });
 }
