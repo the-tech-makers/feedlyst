@@ -51,13 +51,13 @@ Single operational view of implementation work. Detailed execution remains in in
 ## M4 — Publishing & Delivery
 | Module | Task | Status |
 |---|---|---|
-| Embed Runtime | Public widget runtime | IN PROGRESS |
-| Installation | Embed/share installation | IN PROGRESS |
+| Embed Runtime | Public widget runtime | REVIEW |
+| Installation | Embed/share installation | REVIEW |
 
 ## M5 — Usage & Billing
 | Module | Task | Status |
 |---|---|---|
-| Usage | Usage metering | PLANNED |
+| Usage | Usage metering | IN PROGRESS |
 | Billing | Subscriptions | PLANNED |
 
 ## M6 — Growth
