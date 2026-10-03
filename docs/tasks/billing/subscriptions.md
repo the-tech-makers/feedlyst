@@ -43,7 +43,7 @@ Configure the Razorpay webhook URL as:
 Subscribe to the payment/subscription lifecycle events required by the integration, including successful/failed payments and subscription state changes.
 
 ## Reconciliation
-Webhooks are the primary event path. The scheduled worker periodically fetches provider subscription state and subscription transactions to repair missed or delayed webhook deliveries. Razorpay recommends webhooks for automation and API fetching as a fallback for critical status verification. citeturn1search6turn1search3
+Webhooks are the primary event path. The scheduled worker periodically fetches provider subscription state and subscription transactions to repair missed or delayed webhook deliveries. Razorpay recommends webhooks for automation and API fetching as a fallback for critical status verification.
 
 ## Tests
 - Webhook HMAC accepts the exact raw body and rejects tampered payloads.
