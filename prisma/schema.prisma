@@ -391,6 +391,7 @@ model Publication {
 }
 model UsageEvent {
  id String @id @default(uuid()) @db.Uuid
+ eventKey String @unique @map("event_key") @db.VarChar(128)
  accountId String @map("account_id") @db.Uuid
  projectId String? @map("project_id") @db.Uuid
  widgetId String? @map("widget_id") @db.Uuid
