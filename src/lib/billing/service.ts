@@ -64,6 +64,23 @@ export async function listActivePlans() {
   });
 }
 
+export async function listRecentPayments(accountId: string, limit = 10) {
+  return db.payment.findMany({
+    where: { accountId },
+    orderBy: { createdAt: "desc" },
+    take: Math.min(Math.max(limit, 1), 50),
+    select: {
+      id: true,
+      providerPaymentId: true,
+      amountMinor: true,
+      currency: true,
+      status: true,
+      paidAt: true,
+      createdAt: true,
+    },
+  });
+}
+
 export async function getCurrentSubscription(accountId: string) {
   return db.subscription.findFirst({
     where: { accountId, status: { in: ["TRIALING", "ACTIVE", "PAST_DUE"] } },
