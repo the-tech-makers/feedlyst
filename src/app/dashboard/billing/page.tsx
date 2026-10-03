@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { formatPlanPrice, getCurrentSubscription, listActivePlans } from "@/lib/billing/service";
+import { formatPlanPrice, getCurrentSubscription, listActivePlans, listRecentPayments } from "@/lib/billing/service";
 import { BillingActions } from "./billing-actions";
 import { SubscriptionActions } from "./subscription-actions";
 
@@ -11,9 +11,10 @@ export default async function BillingPage() {
   const membership = await db.membership.findFirst({ where: { userId: session.user.id }, select: { accountId: true } });
   if (!membership) redirect("/dashboard");
 
-  const [plans, subscription] = await Promise.all([
+  const [plans, subscription, payments] = await Promise.all([
     listActivePlans(),
     getCurrentSubscription(membership.accountId),
+    listRecentPayments(membership.accountId),
   ]);
 
   return <main className="mx-auto max-w-6xl px-6 py-12">
@@ -31,6 +32,22 @@ export default async function BillingPage() {
       {subscription.currentPeriodEnd && <p className="mt-2 text-sm text-slate-500">Current period ends {subscription.currentPeriodEnd.toLocaleDateString()}</p>}
     <SubscriptionActions />
     </section>}
+
+    <section className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-semibold">Payment history</h2>
+      {payments.length ? <div className="mt-4 divide-y">
+        {payments.map((payment) => <div key={payment.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+          <div>
+            <p className="font-medium text-slate-900">{payment.providerPaymentId}</p>
+            <p className="text-slate-500">{(payment.paidAt ?? payment.createdAt).toLocaleDateString()}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-medium">{new Intl.NumberFormat("en-US", { style: "currency", currency: payment.currency }).format(Number(payment.amountMinor) / 100)}</p>
+            <p className="text-slate-500">{payment.status}</p>
+          </div>
+        </div>)}
+      </div> : <p className="mt-3 text-sm text-slate-500">No payments have been recorded yet.</p>}
+    </section>
 
     <section className="mt-8 grid gap-5 md:grid-cols-3">
       {plans.map((plan) => <article key={plan.id} className="rounded-2xl border bg-white p-6 shadow-sm">
