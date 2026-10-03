@@ -165,6 +165,20 @@ export async function createRazorpaySubscription(input: { planId: string; accoun
   });
 }
 
+export async function cancelRazorpaySubscription(subscriptionId: string, atCycleEnd = true) {
+  const remote = await razorpayRequest<RazorpaySubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ cancel_at_cycle_end: atCycleEnd }),
+  });
+  const local = await db.subscription.findFirst({ where: { provider: "razorpay", providerSubscriptionId: subscriptionId } });
+  if (local && !atCycleEnd) {
+    await db.subscription.update({ where: { id: local.id }, data: { status: "CANCELLED", cancelAt: new Date() } });
+  } else if (local) {
+    await db.subscription.update({ where: { id: local.id }, data: { cancelAt: unixDate((remote as any).current_end) } });
+  }
+  return remote;
+}
+
 export async function reconcileRazorpaySubscription(subscriptionId: string) {
   const remote = await razorpayRequest<RazorpaySubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
   const local = await db.subscription.findFirst({ where: { provider: "razorpay", providerSubscriptionId: remote.id } });
