@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/db", () => ({
-  db: { user: { findUnique: vi.fn() } },
+  db: { user: { findUnique: vi.fn() }, membership: { findUnique: vi.fn() } },
 }));
 
 const { auth } = await import("@/auth");
@@ -40,9 +40,7 @@ describe("server authorization helpers", () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "ACTIVE",
     } as never);
-    const membership = (db as any).membership;
-    if (!membership) (db as any).membership = { findUnique: vi.fn() };
-    (db as any).membership.findUnique.mockResolvedValue(null);
+    vi.mocked(db.membership.findUnique).mockResolvedValue(null);
 
     await expect(requireAccountMembership("account-2")).rejects.toThrow("FORBIDDEN");
   });
