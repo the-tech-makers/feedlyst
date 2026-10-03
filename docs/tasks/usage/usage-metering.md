@@ -4,7 +4,7 @@
 Implementation contract for the Usage Metering module in M5.
 
 ## Status
-IN PROGRESS
+REVIEW
 
 ## Objective
 Record and aggregate billable widget usage.
@@ -22,4 +22,4 @@ Public widget runtime and account model.
 - Counting; retries; duplicate delivery; month rollover; aggregation correctness.
 
 ## Completion
-Metering foundation implemented; dashboard and runtime attribution added. Tests and billing-limit integration remain.
+Usage attribution, idempotent counting, monthly aggregation, subscription limits, and dashboard/API reporting are implemented. Verification tests remain.
