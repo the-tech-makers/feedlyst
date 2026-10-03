@@ -40,17 +40,36 @@ export default async function WidgetEditorPage({
     select: { id: true, name: true, externalId: true },
   });
 
+  const previewSourceIds = widget.sources.map((item) => item.sourceId);
+  const previewReviews = previewSourceIds.length
+    ? await db.review.findMany({
+        where: { sourceId: { in: previewSourceIds } },
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        take: 50,
+        select: {
+          id: true,
+          authorName: true,
+          authorImageUrl: true,
+          rating: true,
+          title: true,
+          body: true,
+          publishedAt: true,
+        },
+      })
+    : [];
+
   return (
     <WidgetEditor
       widget={{
         id: widget.id,
         name: widget.name,
         projectName: widget.project.name,
-        sourceIds: widget.sources.map((item) => item.sourceId),
+        sourceIds: previewSourceIds,
         configuration: draft.configuration,
         publication: widget.publication,
       }}
       sources={sources}
+      previewReviews={previewReviews}
     />
   );
 }
