@@ -29,7 +29,11 @@ export async function POST(request: Request) {
       data: { accountId: input.accountId, name: input.name.trim(), slug: input.slug.trim().toLowerCase(), websiteUrl: input.websiteUrl?.trim() || null },
     });
     return NextResponse.json({ project }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Request failed" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return NextResponse.json(
+      { error: message === "UNAUTHENTICATED" ? "Unauthorized" : "Request failed" },
+      { status: message === "UNAUTHENTICATED" ? 401 : 500 },
+    );
   }
 }
