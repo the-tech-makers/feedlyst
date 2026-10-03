@@ -60,7 +60,7 @@ export async function listActivePlans() {
   return db.plan.findMany({
     where: { status: "ACTIVE" },
     orderBy: [{ priceMinor: "asc" }, { billingInterval: "asc" }],
-    select: { id: true, key: true, name: true, limits: true, priceMinor: true, currency: true, billingInterval: true, providerPlanId: true },
+    select: { id: true, key: true, name: true, limits: true, priceMinor: true, currency: true, billingInterval: true },
   });
 }
 
