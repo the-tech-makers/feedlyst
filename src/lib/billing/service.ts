@@ -1,7 +1,7 @@
 import "server-only";
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
 import type { billing_interval, subscription_status } from "@/generated/prisma/client";
+import { verifyRazorpayWebhookSignature } from "@/lib/billing/security";
 
 const RAZORPAY_API = "https://api.razorpay.com/v1";
 
@@ -225,15 +225,6 @@ export async function reconcileRazorpayPayments(subscriptionId: string) {
     count++;
   }
   return count;
-}
-
-export function verifyRazorpayWebhookSignature(rawBody: string, signature: string) {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  if (!secret || !signature) return false;
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature);
-  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export async function processRazorpayWebhook(input: { rawBody: string; signature: string }) {
