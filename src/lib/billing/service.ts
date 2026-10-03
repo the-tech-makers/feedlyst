@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
 import type { billing_interval, subscription_status } from "@/generated/prisma/client";
 import { verifyRazorpayWebhookSignature } from "@/lib/billing/security";
@@ -233,7 +234,7 @@ export async function processRazorpayWebhook(input: { rawBody: string; signature
   const eventType = typeof payload.event === "string" ? payload.event : "";
   const providerEventId = typeof payload.id === "string"
     ? payload.id
-    : createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!).update(input.rawBody).digest("hex");
+    : createHash("sha256").update(input.rawBody).digest("hex");
 
   const existing = await db.billingWebhookEvent.findUnique({
     where: { provider_providerEventId: { provider: "razorpay", providerEventId } },
