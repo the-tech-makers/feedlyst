@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getReviewViewModels, type ReviewData } from "@/lib/widgets/renderer";
 
 type Config = {
   layout: "list" | "grid" | "carousel";
@@ -27,6 +28,7 @@ const defaults: Config = {
 export default function WidgetEditor({
   widget,
   sources,
+  previewReviews,
 }: {
   widget: {
     id: string;
@@ -37,6 +39,7 @@ export default function WidgetEditor({
     publication: { publicKey: string; status: string; allowedDomains: unknown } | null;
   };
   sources: { id: string; name: string; externalId: string }[];
+  previewReviews: ReviewData[];
 }) {
   const [name, setName] = useState(widget.name);
   const [sourceIds, setSourceIds] = useState(widget.sourceIds);
@@ -57,6 +60,8 @@ export default function WidgetEditor({
     setStatus(response.ok ? "Published" : "Publish failed");
     setPublishing(false);
   }
+
+  const visibleReviews = getReviewViewModels(previewReviews, config);
 
   function toggleSource(id: string) {
     setSourceIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -134,26 +139,38 @@ export default function WidgetEditor({
             </div>
           </aside>
 
-          <section className={`min-h-[560px] rounded-2xl border p-6 shadow-sm ${config.theme === "dark" ? "bg-slate-900 text-white" : "bg-white text-slate-950"}`}>
+          <section aria-label="Widget preview" className={`min-h-[560px] rounded-2xl border p-6 shadow-sm ${config.theme === "dark" ? "bg-slate-900 text-white" : "bg-white text-slate-950"}`}>
             <div className="mx-auto max-w-4xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">{name || "Review widget"}</h2>
                   <p className="text-sm opacity-60">Live editor preview</p>
                 </div>
-                {config.showRating && <span className="rounded-full bg-black/5 px-3 py-1 text-sm">★ 4.8</span>}
+                {config.showRating && <span aria-label="Average rating" className="rounded-full bg-black/5 px-3 py-1 text-sm">★ 4.8</span>}
               </div>
-              <div className={config.layout === "list" ? "space-y-3" : "grid gap-4 sm:grid-cols-2"}>
-                {Array.from({ length: Math.min(config.maxReviews, 6) }).map((_, index) => (
-                  <article key={index} className="rounded-xl border border-current/10 p-5">
-                    {config.showAvatar && <div className="mb-3 h-9 w-9 rounded-full bg-current/10" />}
-                    {config.showRating && <div className="text-sm">★★★★★</div>}
-                    <p className="mt-2 text-sm opacity-80">A realistic preview of a customer review will appear here.</p>
-                    {config.showAuthor && <p className="mt-3 text-xs font-medium">Customer {index + 1}</p>}
-                    {config.showDate && <p className="mt-1 text-xs opacity-50">Recently</p>}
-                  </article>
-                ))}
-              </div>
+              {visibleReviews.length === 0 ? (
+                <div role="status" className="rounded-xl border border-dashed p-8 text-center">
+                  <p className="font-medium">No reviews match these settings.</p>
+                  <p className="mt-1 text-sm opacity-60">Try lowering the minimum rating or syncing a source.</p>
+                </div>
+              ) : (
+                <div className={config.layout === "list" ? "space-y-3" : config.layout === "carousel" ? "flex gap-4 overflow-x-auto pb-2" : "grid gap-4 sm:grid-cols-2"}>
+                  {visibleReviews.map((review) => (
+                    <article key={review.id} className={`rounded-xl border border-current/10 p-5 ${config.layout === "carousel" ? "min-w-[280px] sm:min-w-[320px]" : ""}`}>
+                      {config.showAvatar && (
+                        review.authorImageUrl
+                          ? <img src={review.authorImageUrl} alt="" className="mb-3 h-9 w-9 rounded-full object-cover" />
+                          : <div aria-hidden="true" className="mb-3 h-9 w-9 rounded-full bg-current/10" />
+                      )}
+                      {config.showRating && review.rating != null && <div aria-label={`${review.rating} out of 5 stars`} className="text-sm">{"★".repeat(Math.max(0, Math.min(5, Math.round(review.rating))))}</div>}
+                      {review.title && <h3 className="mt-2 font-medium">{review.title}</h3>}
+                      {review.body && <p className="mt-2 text-sm opacity-80">{review.body}</p>}
+                      {config.showAuthor && review.authorName && <p className="mt-3 text-xs font-medium">{review.authorName}</p>}
+                      {config.showDate && review.formattedDate && <time className="mt-1 block text-xs opacity-50" dateTime={review.publishedAt ? new Date(review.publishedAt).toISOString() : undefined}>{review.formattedDate}</time>}
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>
