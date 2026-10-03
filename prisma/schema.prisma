@@ -461,7 +461,6 @@ model Subscription {
  payments Payment[]
  @@index([accountId,status])
  @@unique([provider,providerSubscriptionId])
- @@index([accountId,status])
  @@index([currentPeriodEnd])
  @@map("subscriptions")
 }
