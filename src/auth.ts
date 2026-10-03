@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import { authenticateCredentials } from "@/lib/authenticate";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -12,15 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = typeof credentials?.email === "string" ? credentials.email.trim().toLowerCase() : "";
-        const password = typeof credentials?.password === "string" ? credentials.password : "";
-        if (!email || !password) return null;
-
-        const user = await db.user.findUnique({ where: { email } });
-        if (!user?.passwordHash || user.status !== "ACTIVE") return null;
-        if (!(await bcrypt.compare(password, user.passwordHash))) return null;
-
-        return { id: user.id, email: user.email, name: user.name, image: user.imageUrl };
+        return authenticateCredentials(credentials?.email, credentials?.password);
       },
     }),
   ],
