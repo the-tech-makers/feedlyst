@@ -5,7 +5,12 @@ function requestOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (origin) return origin.toLowerCase();
   const referer = request.headers.get("referer");
-  return referer ? new URL(referer).origin.toLowerCase() : null;
+  if (!referer) return null;
+  try {
+    return new URL(referer).origin.toLowerCase();
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(
