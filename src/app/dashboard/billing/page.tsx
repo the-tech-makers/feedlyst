@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatPlanPrice, getCurrentSubscription, listActivePlans } from "@/lib/billing/service";
 import { BillingActions } from "./billing-actions";
+import { SubscriptionActions } from "./subscription-actions";
 
 export default async function BillingPage() {
   const session = await auth();
@@ -28,6 +29,7 @@ export default async function BillingPage() {
         <span className="rounded-full border px-3 py-1 text-sm">{subscription.status}</span>
       </div>
       {subscription.currentPeriodEnd && <p className="mt-2 text-sm text-slate-500">Current period ends {subscription.currentPeriodEnd.toLocaleDateString()}</p>}
+    <SubscriptionActions />
     </section>}
 
     <section className="mt-8 grid gap-5 md:grid-cols-3">
