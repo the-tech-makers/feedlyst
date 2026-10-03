@@ -1,0 +1,221 @@
+import "server-only";
+
+export type AgentApproval =
+  | "production_deploy"
+  | "destructive_migration"
+  | "substantial_delete"
+  | "billing_or_credentials"
+  | "ambiguous_requirement"
+  | "repeated_failure";
+
+export type AgentTaskStatus = "PENDING" | "RUNNING" | "PASSED" | "FAILED" | "BLOCKED";
+
+export type AgentTask = {
+  id: string;
+  title: string;
+  objective: string;
+  status: AgentTaskStatus;
+  attempts: number;
+  approvals: AgentApproval[];
+};
+
+export type AgentEvent =
+  | { type: "plan"; taskId: string; summary: string }
+  | { type: "action"; taskId: string; action: string }
+  | { type: "test"; taskId: string; passed: boolean; details: string }
+  | { type: "review"; taskId: string; passed: boolean; findings: string[] }
+  | { type: "approval"; taskId: string; reason: AgentApproval }
+  | { type: "complete"; taskId: string };
+
+export type AgentToolName =
+  | "repository.create_branch"
+  | "repository.inspect"
+  | "repository.edit"
+  | "repository.commit"
+  | "repository.diff"
+  | "tests.run"
+  | "deployment.create_preview"
+  | "deployment.inspect"
+  | "deployment.verify";
+
+export interface AgentTool {
+  name: AgentToolName;
+  execute(input: Record<string, unknown>): Promise<Record<string, unknown>>;
+}
+
+export interface AgentModel {
+  plan(input: {
+    goal: string;
+    repositorySummary: string;
+    completedTasks: AgentTask[];
+    failedAttempts: AgentEvent[];
+  }): Promise<{
+    task: Omit<AgentTask, "id" | "status" | "attempts" | "approvals">;
+    requiresApproval?: AgentApproval;
+  }>;
+  implement(input: {
+    task: AgentTask;
+    repository: Record<string, unknown>;
+    findings?: string[];
+    testDetails?: string;
+  }): Promise<{ edits: Array<{ path: string; content: string; message?: string }>; summary: string }>;
+  review(input: {
+    task: AgentTask;
+    diff: string;
+    testResult: Record<string, unknown>;
+  }): Promise<{ passed: boolean; findings: string[] }>;
+}
+
+export interface AgentPolicy {
+  maxAttemptsPerTask: number;
+  approvals: Set<AgentApproval>;
+}
+
+export class AutonomousAgent {
+  constructor(
+    private readonly model: AgentModel,
+    private readonly tools: Map<AgentToolName, AgentTool>,
+    private readonly policy: AgentPolicy = {
+      maxAttemptsPerTask: 3,
+      approvals: new Set([
+        "production_deploy",
+        "destructive_migration",
+        "substantial_delete",
+        "billing_or_credentials",
+        "ambiguous_requirement",
+        "repeated_failure",
+      ]),
+    },
+  ) {}
+
+  async run(input: {
+    goal: string;
+    repositorySummary: string;
+    completedTasks?: AgentTask[];
+    branch: string;
+  }): Promise<AgentEvent[]> {
+    const events: AgentEvent[] = [];
+    const completedTasks = input.completedTasks ?? [];
+
+    const plan = await this.model.plan({
+      goal: input.goal,
+      repositorySummary: input.repositorySummary,
+      completedTasks,
+      failedAttempts: events,
+    });
+
+    const task: AgentTask = {
+      ...plan.task,
+      id: crypto.randomUUID(),
+      status: "PENDING",
+      attempts: 0,
+      approvals: plan.requiresApproval ? [plan.requiresApproval] : [],
+    };
+
+    if (plan.requiresApproval && this.policy.approvals.has(plan.requiresApproval)) {
+      events.push({ type: "approval", taskId: task.id, reason: plan.requiresApproval });
+      return events;
+    }
+
+    events.push({ type: "plan", taskId: task.id, summary: task.objective });
+    task.status = "RUNNING";
+
+    for (task.attempts = 1; task.attempts <= this.policy.maxAttemptsPerTask; task.attempts++) {
+      const action = await this.executeTask(task, input.branch);
+      events.push({ type: "action", taskId: task.id, action: action.summary });
+
+      const testResult = await this.tools.get("tests.run")?.execute({ taskId: task.id });
+      if (!testResult) throw new Error("tests.run tool is not configured");
+
+      const testsPassed = testResult.passed === true;
+      events.push({
+        type: "test",
+        taskId: task.id,
+        passed: testsPassed,
+        details: String(testResult.details ?? ""),
+      });
+
+      const diff = String(
+        (await this.tools.get("repository.diff")?.execute({ taskId: task.id }))?.diff ?? "",
+      );
+      const review = await this.model.review({ task, diff, testResult });
+      events.push({ type: "review", taskId: task.id, ...review });
+
+      if (testsPassed && review.passed) {
+        const preview = await this.tools.get("deployment.create_preview")?.execute({ branch: input.branch });
+        if (!preview) throw new Error("deployment.create_preview tool is not configured");
+
+        const deployment = await this.tools.get("deployment.inspect")?.execute({
+          deploymentId: preview.deployment?.id,
+        });
+        if (!deployment) throw new Error("deployment.inspect tool is not configured");
+
+        const verification = await this.tools.get("deployment.verify")?.execute({
+          url: deployment.url,
+        });
+        if (!verification?.passed) {
+          events.push({
+            type: "test",
+            taskId: task.id,
+            passed: false,
+            details: String(verification?.details ?? "Preview verification failed"),
+          });
+          continue;
+        }
+
+        task.status = "PASSED";
+        events.push({ type: "complete", taskId: task.id });
+        return events;
+      }
+
+      if (task.attempts === this.policy.maxAttemptsPerTask) {
+        events.push({ type: "approval", taskId: task.id, reason: "repeated_failure" });
+        return events;
+      }
+
+      const implementation = await this.model.implement({
+        task,
+        repository: { branch: input.branch },
+        findings: review.findings,
+        testDetails: String(testResult.details ?? ""),
+      });
+      await this.tools.get("repository.edit")?.execute({
+        taskId: task.id,
+        branch: input.branch,
+        edits: implementation.edits,
+        summary: implementation.summary,
+      });
+    }
+
+    return events;
+  }
+
+  private async executeTask(task: AgentTask, branch: string): Promise<{ summary: string }> {
+    const inspect = await this.tools.get("repository.inspect")?.execute({
+      taskId: task.id,
+      objective: task.objective,
+      branch,
+    });
+    if (!inspect) throw new Error("repository.inspect tool is not configured");
+
+    const implementation = await this.model.implement({
+      task,
+      repository: inspect,
+    });
+    const edit = await this.tools.get("repository.edit")?.execute({
+      taskId: task.id,
+      branch,
+      edits: implementation.edits,
+      summary: implementation.summary,
+    });
+    if (!edit) throw new Error("repository.edit tool is not configured");
+
+    const commit = await this.tools.get("repository.commit")?.execute({
+      taskId: task.id,
+      changes: edit,
+    });
+    if (!commit) throw new Error("repository.commit tool is not configured");
+
+    return { summary: String(commit.summary ?? "Changes committed") };
+  }
+}
