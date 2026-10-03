@@ -126,6 +126,7 @@ model Account {
  usageEvents UsageEvent[]
  subscriptions Subscription[]
  payments Payment[]
+ billingWebhookEvents BillingWebhookEvent[]
  @@index([status])
  @@map("accounts")
 }
@@ -459,7 +460,8 @@ model Subscription {
  plan Plan @relation(fields:[planId], references:[id], onDelete:Restrict)
  payments Payment[]
  @@index([accountId,status])
- @@index([provider,providerSubscriptionId])
+ @@unique([provider,providerSubscriptionId])
+ @@index([accountId,status])
  @@index([currentPeriodEnd])
  @@map("subscriptions")
 }
