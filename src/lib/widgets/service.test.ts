@@ -72,7 +72,7 @@ describe("review widget service", () => {
       widget: { update: vi.fn() },
       widgetVersion: { update: vi.fn().mockResolvedValue({ id: "draft-1" }) },
     };
-    db.$transaction.mockImplementation(async (callback: any) => callback(tx));
+    db.$transaction.mockImplementation(async (callback) => callback(tx as never));
 
     await updateReviewWidgetDraft({
       widgetId: "widget-1",
