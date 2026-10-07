@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getReviewViewModels, type ReviewData } from "@/lib/widgets/renderer";
 
 type Config = {
@@ -26,11 +26,13 @@ export default function WidgetEditor({ widget, sources, previewReviews }: {
   const [config, setConfig] = useState<Config>({ ...defaults, ...(widget.configuration as Partial<Config>) });
   const [status, setStatus] = useState("Saved");
   const [publishing, setPublishing] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const didMount = useRef(false);
 
-  useEffect(() => setHydrated(true), []);
   useEffect(() => {
-    if (!hydrated) return;
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
     const timer = window.setTimeout(async () => {
       setStatus("Saving…");
       try {
@@ -39,7 +41,7 @@ export default function WidgetEditor({ widget, sources, previewReviews }: {
       } catch { setStatus("Save failed"); }
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [hydrated, widget.id, name, sourceIds, config]);
+  }, [widget.id, name, sourceIds, config]);
 
   async function publish() {
     setPublishing(true);
