@@ -134,7 +134,7 @@ export async function recordPayment(input: {
       currency: input.currency,
       status: input.status,
       paidAt: input.paidAt,
-      metadata: input.metadata ?? {},
+      metadata: (input.metadata ?? {}) as any,
     },
   });
 }
