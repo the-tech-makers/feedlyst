@@ -28,6 +28,7 @@ export default function WidgetEditor({ widget, sources, previewReviews }: {
   const [publishing, setPublishing] = useState(false);
   const didMount = useRef(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!didMount.current) {
       didMount.current = true;
