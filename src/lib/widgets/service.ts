@@ -134,7 +134,7 @@ export async function updateReviewWidgetDraft(input: {
 
     return tx.widgetVersion.update({
       where: { id: draft.id },
-      data: { configuration },
+      data: { configuration: configuration as any },
       include: { widget: true },
     });
   });
@@ -173,7 +173,7 @@ export async function publishReviewWidget(widgetId: string, userId: string) {
         state: "DRAFT",
         versionNumber: nextVersionNumber,
         schemaVersion: draft.schemaVersion,
-        configuration: draft.configuration,
+        configuration: draft.configuration as any,
         createdBy: userId,
       },
     });
