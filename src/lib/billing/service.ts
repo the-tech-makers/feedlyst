@@ -126,7 +126,7 @@ export async function recordPayment(input: {
       currency: input.currency,
       status: input.status,
       paidAt: input.paidAt,
-      metadata: input.metadata ?? {},
+      metadata: (input.metadata ?? {}) as any,
     },
     update: {
       subscriptionId: input.subscriptionId,
@@ -259,7 +259,7 @@ export async function processRazorpayWebhook(input: { rawBody: string; signature
   if (existing?.processedAt) return { duplicate: true };
 
   const event = existing ?? await db.billingWebhookEvent.create({
-    data: { provider: "razorpay", providerEventId, eventType, payload },
+    data: { provider: "razorpay", providerEventId, eventType, payload: payload as any },
   });
 
   try {
