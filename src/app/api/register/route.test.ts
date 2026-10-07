@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 vi.mock("@/lib/db", () => ({
   db: {
     user: { findUnique: vi.fn() },
