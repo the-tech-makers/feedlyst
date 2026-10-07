@@ -57,7 +57,7 @@ describe("review renderer helpers", () => {
   });
 
   it("formats valid dates and safely handles invalid values", () => {
-    expect(formatReviewDate("2026-09-01T00:00:00.000Z")).toBe("September 1, 2026");
+    expect(formatReviewDate("2026-09-01T00:00:00.000Z")).toBe("Sep 1, 2026");
     expect(formatReviewDate("not-a-date")).toBe("");
     expect(formatReviewDate(null)).toBe("");
   });
