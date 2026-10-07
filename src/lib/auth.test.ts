@@ -13,12 +13,12 @@ describe("server authorization helpers", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("rejects requests without a session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(auth).mockImplementation(async () => null as never);
     await expect(requireUser()).rejects.toThrow("UNAUTHENTICATED");
   });
 
   it("rejects suspended users even when a session exists", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    vi.mocked(auth).mockImplementation(async () => ({ user: { id: "user-1" } } as never));
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "SUSPENDED",
     } as never);
@@ -26,7 +26,7 @@ describe("server authorization helpers", () => {
   });
 
   it("returns only active authenticated users", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    vi.mocked(auth).mockImplementation(async () => ({ user: { id: "user-1" } } as never));
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "ACTIVE",
     } as never);
@@ -36,7 +36,7 @@ describe("server authorization helpers", () => {
   });
 
   it("rejects non-members before account-scoped access", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    vi.mocked(auth).mockImplementation(async () => ({ user: { id: "user-1" } } as never));
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "ACTIVE",
     } as never);
