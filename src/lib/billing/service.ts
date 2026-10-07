@@ -1,4 +1,6 @@
 import "server-only";
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- Prisma JSON fields accept runtime provider metadata. */
 import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
 import type { billing_interval, subscription_status } from "@/generated/prisma/client";
