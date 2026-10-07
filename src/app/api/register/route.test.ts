@@ -41,7 +41,7 @@ describe("registration API", () => {
       membership: { create: vi.fn() },
       project: { create: vi.fn() },
     };
-    vi.mocked(db.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    vi.mocked(db.$transaction).mockImplementation(async (callback) => callback(tx as never));
 
     const response = await POST(new Request("http://localhost/api/register", {
       method: "POST",
