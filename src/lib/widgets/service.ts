@@ -134,7 +134,7 @@ export async function updateReviewWidgetDraft(input: {
 
     return tx.widgetVersion.update({
       where: { id: draft.id },
-      data: { configuration: configuration as any },
+      data: { configuration: configuration as unknown as typeof draft.configuration },
       include: { widget: true },
     });
   });
@@ -173,7 +173,7 @@ export async function publishReviewWidget(widgetId: string, userId: string) {
         state: "DRAFT",
         versionNumber: nextVersionNumber,
         schemaVersion: draft.schemaVersion,
-        configuration: draft.configuration as any,
+        configuration: draft.configuration as unknown as typeof draft.configuration,
         createdBy: userId,
       },
     });
