@@ -9,16 +9,18 @@ const { auth } = await import("@/auth");
 const { db } = await import("@/lib/db");
 const { requireUser, requireAccountMembership } = await import("./auth");
 
+const mockAuth = vi.mocked(auth as unknown as () => Promise<unknown>);
+
 describe("server authorization helpers", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("rejects requests without a session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    mockAuth.mockResolvedValue(null);
     await expect(requireUser()).rejects.toThrow("UNAUTHENTICATED");
   });
 
   it("rejects suspended users even when a session exists", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    mockAuth.mockResolvedValue({ user: { id: "user-1" } });
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "SUSPENDED",
     } as never);
@@ -26,7 +28,7 @@ describe("server authorization helpers", () => {
   });
 
   it("returns only active authenticated users", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    mockAuth.mockResolvedValue({ user: { id: "user-1" } });
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "ACTIVE",
     } as never);
@@ -36,7 +38,7 @@ describe("server authorization helpers", () => {
   });
 
   it("rejects non-members before account-scoped access", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
+    mockAuth.mockResolvedValue({ user: { id: "user-1" } });
     vi.mocked(db.user.findUnique).mockResolvedValue({
       id: "user-1", email: "user@example.com", name: "User", status: "ACTIVE",
     } as never);
