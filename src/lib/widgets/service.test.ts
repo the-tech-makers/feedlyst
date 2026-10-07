@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Vitest transaction mocks intentionally model Prisma callbacks loosely. */
+
 vi.mock("server-only", () => ({}));
 
 const db = {
