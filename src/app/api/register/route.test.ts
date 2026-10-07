@@ -56,7 +56,7 @@ describe("registration API", () => {
     expect(response.status).toBe(201);
     const userData = tx.user.create.mock.calls[0][0].data;
     expect(userData.email).toBe("user@example.com");
-    expect(userData.passwordHash).toMatch(/^$2[aby]$/);
+    expect(userData.passwordHash).toMatch(/^\$2[aby]\$/);
     expect(userData.passwordHash).not.toBe("password123");
     expect(tx.membership.create).toHaveBeenCalledWith({
       data: { accountId: "account-1", userId: "user-1", role: "OWNER" },
