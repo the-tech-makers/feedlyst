@@ -126,6 +126,10 @@ export async function recordPayment(input: {
       currency: input.currency,
       status: input.status,
       paidAt: input.paidAt,
+      // Razorpay metadata is JSON-shaped and Prisma's generated JSON type is intentionally broader here.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Razorpay metadata is JSON-shaped and Prisma's generated JSON type is intentionally broader here.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       metadata: (input.metadata ?? {}) as any,
     },
     update: {
@@ -192,7 +196,7 @@ export async function cancelRazorpaySubscription(subscriptionId: string, atCycle
   if (local && !atCycleEnd) {
     await db.subscription.update({ where: { id: local.id }, data: { status: "CANCELLED", cancelAt: new Date() } });
   } else if (local) {
-    await db.subscription.update({ where: { id: local.id }, data: { cancelAt: unixDate((remote as any).current_end) } });
+    await db.subscription.update({ where: { id: local.id }, data: { cancelAt: unixDate(remote.current_end) } });
   }
   return remote;
 }
@@ -259,12 +263,13 @@ export async function processRazorpayWebhook(input: { rawBody: string; signature
   if (existing?.processedAt) return { duplicate: true };
 
   const event = existing ?? await db.billingWebhookEvent.create({
-    data: { provider: "razorpay", providerEventId, eventType, payload: payload as any },
+    data: { provider: "razorpay", providerEventId, eventType, payload: payload as unknown as Record<string, unknown> },
   });
 
   try {
-    const subscriptionEntity = (payload.payload as any)?.subscription?.entity as RazorpaySubscription | undefined;
-    const paymentEntity = (payload.payload as any)?.payment?.entity as RazorpayPayment | undefined;
+    const webhookPayload = payload.payload as { subscription?: { entity?: RazorpaySubscription }; payment?: { entity?: RazorpayPayment } } | undefined;
+    const subscriptionEntity = webhookPayload?.subscription?.entity;
+    const paymentEntity = webhookPayload?.payment?.entity;
     const accountId = subscriptionEntity?.notes?.feedlyst_account_id;
     let localSubscription = subscriptionEntity?.id
       ? await db.subscription.findFirst({ where: { provider: "razorpay", providerSubscriptionId: subscriptionEntity.id } })
