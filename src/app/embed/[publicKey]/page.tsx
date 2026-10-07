@@ -7,7 +7,7 @@ export default async function PublicWidgetPage({ params }: { params: Promise<{ p
   const { publicKey } = await params;
   const publication = await db.publication.findUnique({
     where: { publicKey },
-    select: { status: true, widget: { select: { name: true, sources: { select: { sourceId: true } } } }, activeVersion: { select: { configuration: true } } },
+    select: { id: true, status: true, widget: { select: { name: true, sources: { select: { sourceId: true } } } }, activeVersion: { select: { configuration: true } } },
   });
   if (!publication || publication.status !== "PUBLISHED" || !publication.activeVersion) notFound();
   await recordWidgetLoad(publication.id);
