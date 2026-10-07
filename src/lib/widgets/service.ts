@@ -1,4 +1,6 @@
 import "server-only";
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- Prisma transaction callback typing is supplied by the generated client. */
 import { db } from "@/lib/db";
 import {
   DEFAULT_REVIEW_WIDGET_CONFIGURATION,
