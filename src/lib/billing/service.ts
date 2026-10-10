@@ -265,7 +265,7 @@ export async function processRazorpayWebhook(input: { rawBody: string; signature
   if (existing?.processedAt) return { duplicate: true };
 
   const event = existing ?? await db.billingWebhookEvent.create({
-    data: { provider: "razorpay", providerEventId, eventType, payload: payload as unknown as Record<string, unknown> },
+    data: { provider: "razorpay", providerEventId, eventType, payload: payload as any },
   });
 
   try {
