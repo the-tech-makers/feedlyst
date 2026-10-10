@@ -41,7 +41,7 @@
     "typescript": "^5.9.0",
     "@types/bcryptjs": "^2.4.6",
     "@vitest/runner": "^3.2.4",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=20.19.0"
