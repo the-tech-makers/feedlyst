@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 vi.mock("@/lib/db", () => ({
   db: {
     user: { findUnique: vi.fn() },
@@ -41,7 +42,7 @@ describe("registration API", () => {
       membership: { create: vi.fn() },
       project: { create: vi.fn() },
     };
-    vi.mocked(db.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    vi.mocked(db.$transaction).mockImplementation(async (callback) => callback(tx as never));
 
     const response = await POST(new Request("http://localhost/api/register", {
       method: "POST",
@@ -56,7 +57,7 @@ describe("registration API", () => {
     expect(response.status).toBe(201);
     const userData = tx.user.create.mock.calls[0][0].data;
     expect(userData.email).toBe("user@example.com");
-    expect(userData.passwordHash).toMatch(/^$2[aby]$/);
+    expect(userData.passwordHash).toMatch(/^\$2[aby]\$\d{2}\$/);
     expect(userData.passwordHash).not.toBe("password123");
     expect(tx.membership.create).toHaveBeenCalledWith({
       data: { accountId: "account-1", userId: "user-1", role: "OWNER" },
