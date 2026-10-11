@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
     <main className="min-h-screen bg-[#f6f8fc] text-[#10233f]">
       <div className="flex min-h-screen">
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-slate-200/80 bg-white px-4 py-6 lg:flex">
-          <a href="/" className="flex items-center gap-3 px-3"><span className="grid size-10 place-items-center rounded-2xl bg-[#3867f4] text-lg font-bold text-white shadow-md shadow-blue-200">f</span><span className="text-xl font-bold tracking-tight">feedlyst<span className="text-[#3867f4]">.</span></span></a>
+          <Link href="/" className="flex items-center gap-3 px-3"><span className="grid size-10 place-items-center rounded-2xl bg-[#3867f4] text-lg font-bold text-white shadow-md shadow-blue-200">f</span><span className="text-xl font-bold tracking-tight">feedlyst<span className="text-[#3867f4]">.</span></span></Link>
           <div className="mt-9 rounded-2xl border border-slate-200 bg-slate-50 p-3"><p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Current workspace</p><div className="mt-3 flex items-center gap-3"><span className="grid size-9 place-items-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700">{(project?.name ?? "W").slice(0,1).toUpperCase()}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{project?.name ?? "Your workspace"}</p><p className="mt-0.5 truncate text-xs text-slate-500">Free workspace</p></div><span className="text-slate-400">⌄</span></div></div>
           <p className="mb-2 mt-8 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
           <nav className="space-y-1" aria-label="Workspace navigation">
@@ -75,7 +76,7 @@ export default async function DashboardPage() {
                 <div className="mt-6 border-t border-slate-100 pt-5"><p className="text-xs leading-5 text-slate-500">Need to change your project details? Project settings will be available as you continue setting up your workspace.</p></div>
               </aside>
             </div>
-            <footer className="mt-10 flex flex-col gap-2 border-t border-slate-200/80 pt-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"><span>Feedlyst · Your social proof workspace</span><a href="/" className="font-semibold hover:text-slate-600">Visit homepage ↗</a></footer>
+            <footer className="mt-10 flex flex-col gap-2 border-t border-slate-200/80 pt-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"><span>Feedlyst · Your social proof workspace</span><Link href="/" className="font-semibold hover:text-slate-600">Visit homepage ↗</Link></footer>
           </div>
         </section>
       </div>
