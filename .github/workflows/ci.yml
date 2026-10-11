@@ -20,35 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install --ignore-scripts
+      - run: npm ci
       - run: npm run db:generate
       - run: npm run test
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
-
-  capture-lockfile:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Generate lockfile without running package scripts
-        run: npm install --package-lock-only --ignore-scripts
-      - name: Commit lockfile to the PR branch
-        run: |
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "No generated lockfile changes to commit."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: add generated npm lockfile"
-            git push origin "HEAD:${GITHUB_HEAD_REF}"
-          fi
