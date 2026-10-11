@@ -21,6 +21,18 @@ export default async function DashboardPage() {
   });
 
   const project = projects[0];
+  const [reviewCount, publishedWidgetCount] = await Promise.all([
+    db.review.count({
+      where: { source: { connection: { account: { memberships: { some: { userId: session.user.id } } } } },
+    }),
+    db.widget.count({
+      where: {
+        type: "review",
+        publication: { is: { status: "PUBLISHED" } },
+        project: { account: { memberships: { some: { userId: session.user.id } } } },
+      },
+    }),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#f6f8fc] text-[#10233f]">
@@ -53,8 +65,8 @@ export default async function DashboardPage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[
                 { label: "Projects", value: String(projects.length), detail: "Your organized workspaces", icon: "▦", tone: "bg-indigo-50 text-indigo-700" },
-                { label: "Reviews collected", value: "0", detail: "Customer stories in your library", icon: "✳", tone: "bg-amber-50 text-amber-700" },
-                { label: "Published widgets", value: "0", detail: "Social proof on your website", icon: "▧", tone: "bg-emerald-50 text-emerald-700" },
+                { label: "Reviews collected", value: String(reviewCount), detail: "Customer stories in your library", icon: "✳", tone: "bg-amber-50 text-amber-700" },
+                { label: "Published widgets", value: String(publishedWidgetCount), detail: "Social proof on your website", icon: "▧", tone: "bg-emerald-50 text-emerald-700" },
               ].map((metric) => <article key={metric.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6"><div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-500">{metric.label}</p><span className={`grid size-10 place-items-center rounded-xl text-lg ${metric.tone}`}>{metric.icon}</span></div><p className="mt-5 text-3xl font-bold tracking-tight">{metric.value}</p><p className="mt-1.5 text-xs text-slate-400">{metric.detail}</p></article>)}
             </div>
 
