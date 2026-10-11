@@ -15,7 +15,10 @@ export default async function SourcesPage() {
       name: true,
       connections: {
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
           integration: { select: { key: true, name: true } },
           sources: {
             orderBy: { name: "asc" },
