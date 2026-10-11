@@ -94,7 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"><Link href="/" className="font-bold tracking-tight text-slate-600">feedlyst.</Link><p>Thoughtful social proof for your website.</p><div className="flex gap-5"><a className="hover:text-slate-700" href="/login">Sign in</a><a className="hover:text-slate-700" href="/register">Create account</a></div></footer>
+      <footer className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"><Link href="/" className="font-bold tracking-tight text-slate-600">feedlyst.</Link><p>Thoughtful social proof for your website.</p><div className="flex flex-wrap gap-x-5 gap-y-2"><a className="hover:text-slate-700" href="/login">Sign in</a><a className="hover:text-slate-700" href="/register">Create account</a><a className="hover:text-slate-700" href="/privacy">Privacy Policy</a><a className="hover:text-slate-700" href="/terms">Terms</a></div></footer>
     </main>
   );
 }

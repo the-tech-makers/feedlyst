@@ -18,7 +18,7 @@ function getGoogleConfig(redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI ?? 
     authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? process.env.GOOGL_CLIENT_SECRET ?? "",
     redirectUri,
     scopes: GOOGLE_BUSINESS_PROFILE_SCOPES,
   };
