@@ -43,7 +43,7 @@ export default function RegisterPage() {
         redirectTo: "/dashboard",
       });
       if (!result || result.error) {
-        router.replace("/login?registered=1");
+        setError("Your account was created, but automatic sign-in didn't complete. Please sign in with your new credentials.");
         return;
       }
       router.replace(result.url ?? "/dashboard");
