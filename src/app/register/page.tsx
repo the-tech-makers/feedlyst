@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -34,7 +35,7 @@ export default function RegisterPage() {
       <section className="relative hidden overflow-hidden bg-[#13264a] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-20">
         <div className="absolute -left-28 top-28 size-[28rem] rounded-full bg-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-40 -right-24 size-[26rem] rounded-full bg-violet-500/20 blur-3xl" />
-        <a href="/" className="relative flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-white text-lg font-bold text-[#3867f4]">f</span><span className="text-xl font-bold tracking-tight">feedlyst<span className="text-blue-300">.</span></span></a>
+        <Link href="/" className="relative flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-white text-lg font-bold text-[#3867f4]">f</span><span className="text-xl font-bold tracking-tight">feedlyst<span className="text-blue-300">.</span></span></Link>
         <div className="relative max-w-xl pb-12">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">Your workspace starts here</p>
           <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight xl:text-5xl">Make trust part of your website.</h1>
@@ -48,7 +49,7 @@ export default function RegisterPage() {
 
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10">
         <div className="w-full max-w-md">
-          <a href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-900 lg:hidden"><span className="grid size-8 place-items-center rounded-xl bg-[#3867f4] text-white">f</span> feedlyst.</a>
+          <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-900 lg:hidden"><span className="grid size-8 place-items-center rounded-xl bg-[#3867f4] text-white">f</span> feedlyst.</Link>
           <div className="mb-7">
             <p className="text-sm font-semibold text-[#3867f4]">Get started for free</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#10233f]">Create your workspace</h2>
