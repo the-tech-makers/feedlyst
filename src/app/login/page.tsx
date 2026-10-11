@@ -1,7 +1,41 @@
+"use client";
+
 import Link from "next/link";
-import { signIn } from "@/auth";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+    const form = new FormData(event.currentTarget);
+
+    try {
+      const result = await signIn("credentials", {
+        email: String(form.get("email") ?? ""),
+        password: String(form.get("password") ?? ""),
+        redirect: false,
+        redirectTo: "/dashboard",
+      });
+      if (!result || result.error) {
+        setError("That email and password combination was not recognized. Please try again.");
+        return;
+      }
+      router.replace(result.url ?? "/dashboard");
+      router.refresh();
+    } catch {
+      setError("We couldn't sign you in right now. Please try again in a moment.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[1fr_0.9fr]">
       <section className="relative hidden overflow-hidden bg-[#13264a] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-20">
@@ -29,22 +63,13 @@ export default function LoginPage() {
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#10233f]">Sign in to Feedlyst</h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">Welcome back. Enter your account details to continue to your workspace.</p>
           </div>
-          <form
-            action={async (formData) => {
-              "use server";
-              await signIn("credentials", {
-                email: formData.get("email"),
-                password: formData.get("password"),
-                redirectTo: "/dashboard",
-              });
-            }}
-            className="space-y-5"
-          >
+          <form onSubmit={submit} className="space-y-5">
             <div><label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">Email address</label><input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></div>
-            <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="block text-sm font-semibold text-slate-700">Password</label></div><input id="password" name="password" type="password" autoComplete="current-password" required placeholder="Enter your password" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></div>
-            <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200">Sign in <span aria-hidden="true">→</span></button>
+            <div><label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-700">Password</label><input id="password" name="password" type="password" autoComplete="current-password" required placeholder="Enter your password" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></div>
+            {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">{error}</p> : null}
+            <button type="submit" disabled={isSubmitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Signing you in…" : "Sign in"} {!isSubmitting && <span aria-hidden="true">→</span>}</button>
           </form>
-          <p className="mt-7 text-center text-sm text-slate-500">New to Feedlyst? <a href="/register" className="font-bold text-[#3867f4] hover:text-blue-800">Create an account</a></p>
+          <p className="mt-7 text-center text-sm text-slate-500">New to Feedlyst? <Link href="/register" className="font-bold text-[#3867f4] hover:text-blue-800">Create an account</Link></p>
           <p className="mt-12 text-center text-xs text-slate-400">By continuing, you agree to use Feedlyst responsibly.</p>
         </div>
       </section>
