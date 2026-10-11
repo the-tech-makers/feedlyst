@@ -2,6 +2,15 @@
 
 :root {
   color-scheme: light;
+  --feedlyst-ink: #10233f;
+  --feedlyst-muted: #66758b;
+  --feedlyst-line: #e5eaf1;
+  --feedlyst-blue: #3867f4;
+  --feedlyst-canvas: #f6f8fc;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html,
@@ -11,4 +20,22 @@ body {
 
 body {
   margin: 0;
+  background: var(--feedlyst-canvas);
+  color: var(--feedlyst-ink);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #dbe6ff;
+  color: #10233f;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
 }
