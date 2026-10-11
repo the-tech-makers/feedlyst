@@ -1,33 +1,58 @@
-import Link from "next/link";
 "use client";
 
-import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setIsSubmitting(true);
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        email: form.get("email"),
-        password: form.get("password"),
-        name: form.get("name"),
-        accountName: form.get("accountName"),
-      }),
-    });
-    if (!response.ok) {
-      const body = (await response.json()) as { error?: string };
-      setError(body.error ?? "Registration failed");
-      return;
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const password = String(form.get("password") ?? "");
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name: form.get("name"),
+          accountName: form.get("accountName"),
+        }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        setError(body.error ?? "Registration failed. Please check your details and try again.");
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        redirectTo: "/dashboard",
+      });
+      if (!result || result.error) {
+        router.replace("/login?registered=1");
+        return;
+      }
+      router.replace(result.url ?? "/dashboard");
+      router.refresh();
+    } catch {
+      setError("We couldn't complete registration right now. Please try again in a moment.");
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push("/login");
   }
 
   return (
@@ -61,9 +86,9 @@ export default function RegisterPage() {
             <div><label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">Work email</label><input id="email" name="email" type="email" required autoComplete="email" placeholder="you@company.com" className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></div>
             <div><label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-700">Create a password</label><input id="password" name="password" type="password" minLength={8} required autoComplete="new-password" placeholder="At least 8 characters" className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /><p className="mt-1.5 text-xs text-slate-400">Use at least 8 characters.</p></div>
             {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
-            <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200">Create account <span aria-hidden="true">→</span></button>
+            <button type="submit" disabled={isSubmitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Creating your workspace…" : "Create account"} {!isSubmitting && <span aria-hidden="true">→</span>}</button>
           </form>
-          <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <a href="/login" className="font-bold text-[#3867f4] hover:text-blue-800">Sign in</a></p>
+          <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="font-bold text-[#3867f4] hover:text-blue-800">Sign in</Link></p>
           <p className="mt-7 text-center text-xs leading-5 text-slate-400">By creating an account, you agree to keep your workspace and content secure.</p>
         </div>
       </section>
