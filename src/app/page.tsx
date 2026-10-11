@@ -1,3 +1,4 @@
+import Link from "next/link";
 const capabilities = [
   {
     number: "01",
@@ -24,10 +25,10 @@ export default function HomePage() {
     <main className="min-h-screen overflow-hidden bg-white text-[#10233f]">
       <header className="relative z-10 border-b border-slate-100 bg-white/90">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-          <a href="/" aria-label="Feedlyst home" className="flex items-center gap-3">
+          <Link href="/" aria-label="Feedlyst home" className="flex items-center gap-3">
             <span className="grid size-10 place-items-center rounded-2xl bg-[#3867f4] text-lg font-bold text-white shadow-lg shadow-blue-200">f</span>
             <span className="text-xl font-bold tracking-tight">feedlyst<span className="text-[#3867f4]">.</span></span>
-          </a>
+          </Link>
           <nav className="flex items-center gap-2 sm:gap-4" aria-label="Main navigation">
             <a href="/login" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 sm:px-4">Sign in</a>
             <a href="/register" className="rounded-xl bg-[#3867f4] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:px-5">Get started <span aria-hidden="true">→</span></a>
@@ -93,7 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"><a href="/" className="font-bold tracking-tight text-slate-600">feedlyst.</a><p>Thoughtful social proof for your website.</p><div className="flex gap-5"><a className="hover:text-slate-700" href="/login">Sign in</a><a className="hover:text-slate-700" href="/register">Create account</a></div></footer>
+      <footer className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"><Link href="/" className="font-bold tracking-tight text-slate-600">feedlyst.</Link><p>Thoughtful social proof for your website.</p><div className="flex gap-5"><a className="hover:text-slate-700" href="/login">Sign in</a><a className="hover:text-slate-700" href="/register">Create account</a></div></footer>
     </main>
   );
 }
