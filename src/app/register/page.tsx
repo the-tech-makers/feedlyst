@@ -89,7 +89,7 @@ export default function RegisterPage() {
             <button type="submit" disabled={isSubmitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Creating your workspace…" : "Create account"} {!isSubmitting && <span aria-hidden="true">→</span>}</button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="font-bold text-[#3867f4] hover:text-blue-800">Sign in</Link></p>
-          <p className="mt-7 text-center text-xs leading-5 text-slate-400">By creating an account, you agree to keep your workspace and content secure.</p>
+          <p className="mt-7 text-center text-xs leading-6 text-slate-400">By creating an account, you agree to keep your workspace and content secure. <Link href="/privacy" className="font-semibold text-slate-500 hover:text-[#3867f4]">Privacy Policy</Link> · <Link href="/terms" className="font-semibold text-slate-500 hover:text-[#3867f4]">Terms of Service</Link></p>
         </div>
       </section>
     </main>
