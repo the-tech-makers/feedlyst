@@ -52,7 +52,7 @@ export default async function DashboardPage() {
           <nav className="space-y-1" aria-label="Workspace navigation">
             {navigation.map((item) => <a key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${item.active ? "bg-blue-50 text-[#315de0]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><span className="grid size-6 place-items-center text-base">{item.icon}</span><span className="flex-1">{item.label}</span>{item.count ? <span className={`rounded-lg px-2 py-0.5 text-[11px] ${item.active ? "bg-white text-blue-700" : "bg-slate-100 text-slate-500"}`}>{item.count}</span> : null}</a>)}
           </nav>
-          <div className="mt-auto rounded-2xl bg-[#13264a] p-4 text-white"><span className="grid size-9 place-items-center rounded-xl bg-white/10 text-lg">✦</span><h3 className="mt-4 text-sm font-bold">Make trust visible</h3><p className="mt-2 text-xs leading-5 text-blue-100/70">Connect your first source to start collecting customer stories.</p><a href="/dashboard/sources" className="mt-4 flex items-center justify-center rounded-xl bg-white px-3 py-2.5 text-xs font-bold text-[#13264a] transition hover:bg-blue-50">Connect a source →</a></div>
+          <div className="mt-auto rounded-2xl bg-[#13264a] p-4 text-white"><span className="grid size-9 place-items-center rounded-xl bg-white/10 text-lg">✦</span><h3 className="mt-4 text-sm font-bold">Make trust visible</h3><p className="mt-2 text-xs leading-5 text-blue-100/70">Connect your first source to start collecting customer stories.</p><Link href="/dashboard/sources" className="mt-4 flex items-center justify-center rounded-xl bg-white px-3 py-2.5 text-xs font-bold text-[#13264a] transition hover:bg-blue-50">Connect a source →</Link></div>
         </aside>
 
         <section className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
           <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
               <div><p className="text-xs font-bold uppercase tracking-[0.17em] text-[#3867f4]">Your overview</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Good to have you here{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Your workspace is ready. Connect a source to start bringing customer feedback into Feedlyst.</p></div>
-              <a href="/dashboard/sources" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700">＋ Connect a source</a>
+              <Link href="/dashboard/sources" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3867f4] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700">＋ Connect a source</Link>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
