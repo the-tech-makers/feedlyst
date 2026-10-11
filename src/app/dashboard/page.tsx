@@ -23,7 +23,15 @@ export default async function DashboardPage() {
   const project = projects[0];
   const [reviewCount, publishedWidgetCount] = await Promise.all([
     db.review.count({
-      where: { source: { connection: { account: { memberships: { some: { userId: session.user.id } } } } },
+      where: {
+        source: {
+          connection: {
+            account: {
+              memberships: { some: { userId: session.user.id } },
+            },
+          },
+        },
+      },
     }),
     db.widget.count({
       where: {
