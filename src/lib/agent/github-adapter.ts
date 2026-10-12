@@ -100,17 +100,19 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
       const keywords = objective.toLowerCase().match(/[a-z][a-z0-9_-]{2,}/g) ?? [];
       const ignored = new Set(["the", "and", "for", "with", "from", "into", "that", "this", "task", "make", "build", "improve", "update", "fix", "implement", "change", "existing"]);
       const relevantKeywords = [...new Set(keywords.filter((word) => !ignored.has(word)))];
-      const candidates = paths
-        .filter(inspectablePath)
-        .map((path: string) => ({
-          path,
-          score: scorePath(path, relevantKeywords) +
-            (path === "package.json" || path === "tsconfig.json" || path === "AGENT.md" ? 2 : 0),
-        }))
-        .sort((a: { path: string; score: number }, b: { path: string; score: number }) =>
-          b.score - a.score || a.path.localeCompare(b.path),
-        )
-        .slice(0, 12);
+      const candidates = objective.trim()
+        ? paths
+            .filter(inspectablePath)
+            .map((path: string) => ({
+              path,
+              score: scorePath(path, relevantKeywords) +
+                (path === "package.json" || path === "tsconfig.json" || path === "AGENT.md" ? 2 : 0),
+            }))
+            .sort((a: { path: string; score: number }, b: { path: string; score: number }) =>
+              b.score - a.score || a.path.localeCompare(b.path),
+            )
+            .slice(0, 12)
+        : [];
 
       const files: Array<{ path: string; content: string; truncated?: boolean }> = [];
       let totalChars = 0;
