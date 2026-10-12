@@ -24,9 +24,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - run: npm ci
+      # The repository does not currently commit an npm lockfile, so npm ci cannot run.
+      - run: npm install --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+        env:
+          # Build-time placeholder only; the build checks configuration but does not connect to this database.
+          DATABASE_URL: postgresql://feedlyst:feedlyst@127.0.0.1:5432/feedlyst
