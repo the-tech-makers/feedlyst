@@ -27,8 +27,10 @@ jobs:
 
       # The repository does not currently commit an npm lockfile, so npm ci cannot run.
       - run: npm install --no-audit --no-fund
-      - run: npm run lint
+      - run: npm run db:generate
+      - run: npm run test
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm run build
         env:
           # Build-time placeholder only; the build checks configuration but does not connect to this database.
