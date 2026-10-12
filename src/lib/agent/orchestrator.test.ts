@@ -88,6 +88,31 @@ describe("AutonomousAgent", () => {
     expect(events.some((event) => event.type === "complete")).toBe(false);
   });
 
+  it("requires approval for a production deployment even when the model omits the approval flag", async () => {
+    const inspect = vi.fn(async () => ({ files: [] }));
+    const agent = new AutonomousAgent(
+      makeModel({
+        async plan() {
+          return {
+            task: { title: "Deploy", objective: "Deploy to production" },
+          };
+        },
+      }),
+      makeTools({ "repository.inspect": inspect }),
+    );
+
+    const events = await agent.run({
+      goal: "Improve Feedlyst",
+      repositorySummary: "repo",
+      branch: "agent/test",
+    });
+
+    expect(events).toEqual([
+      expect.objectContaining({ type: "approval", reason: "production_deploy" }),
+    ]);
+    expect(inspect).not.toHaveBeenCalled();
+  });
+
   it("only reports completion after checks, review, and preview verification pass", async () => {
     const verify = vi.fn(async () => ({ passed: true, details: "Preview returned HTTP 200" }));
     const agent = new AutonomousAgent(
