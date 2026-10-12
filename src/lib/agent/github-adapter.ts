@@ -52,6 +52,16 @@ async function github(path: string, init?: RequestInit) {
   return text ? JSON.parse(text) : {};
 }
 
+function inspectablePath(path: string) {
+  if (path.startsWith(".env") || path.includes("lock")) return false;
+  return /\.(ts|tsx|js|jsx|json|md|yml|yaml|css|prisma|mjs|cjs)$/.test(path);
+}
+
+function scorePath(path: string, keywords: string[]) {
+  const normalized = path.toLowerCase();
+  return keywords.reduce((score, keyword) => score + (normalized.includes(keyword) ? keyword.length : 0), 0);
+}
+
 export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
   const tools = new Map<AgentTool["name"], AgentTool>();
 
@@ -76,6 +86,7 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
     name: "repository.inspect",
     async execute(input) {
       const branch = typeof input.branch === "string" && input.branch ? input.branch : "main";
+      const objective = typeof input.objective === "string" ? input.objective : "";
       const ref = await github(`/git/ref/heads/${encodePath(branch)}`);
       const commit = await github(`/git/commits/${encodeURIComponent(ref.object.sha)}`);
       const [repoInfo, tree] = await Promise.all([
@@ -85,7 +96,42 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
       const paths = Array.isArray(tree.tree)
         ? tree.tree.filter((x: { type?: string }) => x.type === "blob").map((x: { path: string }) => x.path)
         : [];
-      return { branch, defaultBranch: repoInfo.default_branch, name: repoInfo.full_name, paths };
+
+      const keywords = objective.toLowerCase().match(/[a-z][a-z0-9_-]{2,}/g) ?? [];
+      const ignored = new Set(["the", "and", "for", "with", "from", "into", "that", "this", "task", "make", "build", "improve", "update", "fix", "implement", "change", "existing"]);
+      const relevantKeywords = [...new Set(keywords.filter((word) => !ignored.has(word)))];
+      const candidates = paths
+        .filter(inspectablePath)
+        .map((path: string) => ({
+          path,
+          score: scorePath(path, relevantKeywords) +
+            (path === "package.json" || path === "tsconfig.json" || path === "AGENT.md" ? 2 : 0),
+        }))
+        .sort((a: { path: string; score: number }, b: { path: string; score: number }) =>
+          b.score - a.score || a.path.localeCompare(b.path),
+        )
+        .slice(0, 12);
+
+      const files: Array<{ path: string; content: string; truncated?: boolean }> = [];
+      let totalChars = 0;
+      for (const candidate of candidates) {
+        if (totalChars >= 50000) break;
+        try {
+          const file = await github(
+            `/contents/${encodePath(candidate.path)}?ref=${encodeURIComponent(branch)}`,
+          );
+          if (typeof file.content !== "string" || file.encoding !== "base64") continue;
+          const decoded = Buffer.from(file.content.replace(/\n/g, ""), "base64").toString("utf8");
+          const remaining = 50000 - totalChars;
+          const content = decoded.slice(0, Math.min(8000, remaining));
+          files.push({ path: candidate.path, content, ...(content.length < decoded.length ? { truncated: true } : {}) });
+          totalChars += content.length;
+        } catch {
+          // A file that disappears or cannot be read should not prevent repository inspection.
+        }
+      }
+
+      return { branch, defaultBranch: repoInfo.default_branch, name: repoInfo.full_name, paths, files };
     },
   });
 
