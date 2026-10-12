@@ -145,8 +145,8 @@ export class AutonomousAgent {
     });
 
     // Enforce critical approval gates in code, not only through the model's plan.
-    const requiredApproval = plan.requiresApproval ??
-      inferRequiredApproval(plan.task.title, plan.task.objective);
+    const requiredApproval = inferRequiredApproval(plan.task.title, plan.task.objective) ??
+      plan.requiresApproval;
     const task: AgentTask = {
       ...plan.task,
       id: crypto.randomUUID(),
