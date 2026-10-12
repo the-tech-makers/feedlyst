@@ -76,9 +76,11 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
     name: "repository.inspect",
     async execute(input) {
       const branch = typeof input.branch === "string" && input.branch ? input.branch : "main";
+      const ref = await github(`/git/ref/heads/${encodePath(branch)}`);
+      const commit = await github(`/git/commits/${encodeURIComponent(ref.object.sha)}`);
       const [repoInfo, tree] = await Promise.all([
         github(""),
-        github(`/git/trees/${encodePath(branch)}?recursive=1`),
+        github(`/git/trees/${encodeURIComponent(commit.tree.sha)}?recursive=1`),
       ]);
       const paths = Array.isArray(tree.tree)
         ? tree.tree.filter((x: { type?: string }) => x.type === "blob").map((x: { path: string }) => x.path)
