@@ -130,6 +130,35 @@ describe("AutonomousAgent", () => {
     expect(events.at(-1)).toEqual(expect.objectContaining({ type: "complete" }));
   });
 
+  it("retries after a transient test-runner exception instead of aborting the task", async () => {
+    let testAttempts = 0;
+    const implement = vi.fn(async () => ({
+      edits: [{ path: "src/example.test.ts", content: "test content" }],
+      summary: "Remediated the failed attempt",
+    }));
+    const agent = new AutonomousAgent(
+      makeModel({ implement }),
+      makeTools({
+        "tests.run": async () => {
+          testAttempts += 1;
+          if (testAttempts === 1) throw new Error("Temporary CI API failure");
+          return { passed: true, details: "Checks passed on retry" };
+        },
+      }),
+    );
+
+    const events = await agent.run({
+      goal: "Improve Feedlyst",
+      repositorySummary: "repo",
+      branch: "agent/test",
+    });
+
+    expect(testAttempts).toBe(2);
+    expect(implement).toHaveBeenCalledTimes(2);
+    expect(events.some((event) => event.type === "test" && !event.passed && event.details.includes("Temporary CI API failure"))).toBe(true);
+    expect(events.at(-1)).toEqual(expect.objectContaining({ type: "complete" }));
+  });
+
   it("does not report completion when preview verification fails", async () => {
     const agent = new AutonomousAgent(
       makeModel(),
