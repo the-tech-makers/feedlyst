@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Google Business Profile sync failed", message || "UNKNOWN_SYNC_ERROR");
-    const match = message.match(/^GOOGLE_API_(\\d{3})(?::(.*))?$/);
+    const match = message.match(/^GOOGLE_API_(\d{3})(?::(.*))?$/);
     const code = match ? Number(match[1]) : 0;
     const detail = match?.[2]?.trim();
     let errorMessage = "Unable to sync this connection. Check the Google connection and try again.";
