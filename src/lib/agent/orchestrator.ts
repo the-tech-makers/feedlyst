@@ -284,8 +284,8 @@ export class AutonomousAgent {
       if (!testsPassed && lastFindings.length === 0) {
         lastFindings = ["Automated verification failed. Review the test output and correct the implementation."];
       }
-      if (testsPassed && !review.passed && lastFindings.length === 0) {
-        lastFindings = ["Code review did not pass. Address the review findings before retrying."];
+      if (testsPassed && lastFindings.length === 0) {
+        lastFindings = ["Verification did not complete successfully. Inspect the latest test and review events before retrying."];
       }
     }
 
