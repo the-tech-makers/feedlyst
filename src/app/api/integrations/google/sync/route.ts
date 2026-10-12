@@ -26,7 +26,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ sources: result.sources, reviews });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    const status = message === "UNAUTHENTICATED" ? 401 : 502;
-    return NextResponse.json({ error: status === 401 ? "Unauthorized" : "Unable to sync this connection. Check the Google connection and try again." }, { status });
+    if (message === "UNAUTHENTICATED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Google Business Profile sync failed", message || "UNKNOWN_SYNC_ERROR");
+    const match = message.match(/^GOOGLE_API_(\d{3})(?::(.*))?$/);
+    const code = match ? Number(match[1]) : 0;
+    const detail = match?.[2]?.trim();
+    let errorMessage = "Unable to sync this connection. Check the Google connection and try again.";
+    if (code === 401) errorMessage = "Google rejected the access token. Reconnect Google Business Profile and try again.";
+    if (code === 403) errorMessage = "Google denied API access (403). Check Business Profile API access approval, enabled APIs, and access to the business location.";
+    if (code === 404) errorMessage = `Google Business Profile returned 404${detail ? `: ${detail}` : "."} Verify the location resource and that your Google Cloud project has access to the required Business Profile APIs.`;
+    if (code === 429) errorMessage = "Google Business Profile API quota was exceeded (429). Check API access and quota in Google Cloud Console, then retry later.";
+    if (code && ![401, 403, 404, 429].includes(code)) errorMessage = `Google Business Profile API request failed (HTTP ${code})${detail ? `: ${detail}` : "."}`;
+    return NextResponse.json({ error: errorMessage }, { status: 502 });
   }
 }

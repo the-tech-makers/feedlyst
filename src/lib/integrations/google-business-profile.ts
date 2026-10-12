@@ -32,7 +32,17 @@ async function googleGet<T>(url: string, accessToken: string): Promise<T> {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });
-  if (!response.ok) throw new Error(`GOOGLE_API_${response.status}`);
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const body = await response.json() as { error?: { message?: string; status?: string } };
+      detail = body.error?.message ?? body.error?.status ?? "";
+    } catch {
+      // Keep the HTTP status when Google returns a non-JSON error response.
+    }
+    const safeDetail = detail.replace(/[\r\n]+/g, " ").slice(0, 160);
+    throw new Error(`GOOGLE_API_${response.status}${safeDetail ? `:${safeDetail}` : ""}`);
+  }
   return response.json() as Promise<T>;
 }
 
@@ -61,12 +71,32 @@ export async function listGoogleLocations(
 export async function listGoogleReviews(
   credentials: GoogleCredentials,
   locationName: string,
+  accountName?: string,
 ) {
-  const response = await googleGet<{ reviews?: GoogleReview[] }>(
-    `${REVIEWS_API}/${locationName}/reviews`,
-    credentials.accessToken,
-  );
-  return response.reviews ?? [];
+  // Reviews API v4 requires accounts/{accountId}/locations/{locationId}.
+  // Business Information can return location names as locations/{id}, so
+  // rebuild the full resource name from the account stored with each source.
+  const reviewParent = locationName.startsWith("accounts/")
+    ? locationName
+    : accountName && locationName.startsWith("locations/")
+      ? `${accountName}/${locationName}`
+      : locationName;
+  const params = new URLSearchParams({ pageSize: "50" });
+  const reviews: GoogleReview[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    if (pageToken) params.set("pageToken", pageToken);
+    else params.delete("pageToken");
+    const response = await googleGet<{
+      reviews?: GoogleReview[];
+      nextPageToken?: string;
+    }>(`${REVIEWS_API}/${reviewParent}/reviews?${params}`, credentials.accessToken);
+    reviews.push(...(response.reviews ?? []));
+    pageToken = response.nextPageToken;
+  } while (pageToken);
+
+  return reviews;
 }
 
 export function normalizeGoogleRating(starRating?: string) {

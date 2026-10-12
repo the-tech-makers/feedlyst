@@ -70,6 +70,7 @@ export async function syncGoogleSource(sourceId: string) {
       id: true,
       connectionId: true,
       externalId: true,
+      metadata: true,
       status: true,
     },
   });
@@ -87,7 +88,8 @@ export async function syncGoogleSource(sourceId: string) {
 
   try {
     const credentials = await getValidGoogleCredentials(source.connectionId);
-    const reviews = await listGoogleReviews(credentials, source.externalId);
+    const metadata = source.metadata as { account?: { name?: string } } | null;
+    const reviews = await listGoogleReviews(credentials, source.externalId, metadata?.account?.name);
     let created = 0;
     let updated = 0;
 
