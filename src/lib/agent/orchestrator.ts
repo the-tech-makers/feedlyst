@@ -169,6 +169,8 @@ export class AutonomousAgent {
     for (let attempt = 1; attempt <= this.policy.maxAttemptsPerTask; attempt++) {
       task.attempts = attempt;
 
+      let testsPassed = false;
+      try {
       if (attempt === 1) {
         const action = await this.executeTask(task, input.branch);
         events.push({ type: "action", taskId: task.id, action: action.summary });
@@ -202,7 +204,7 @@ export class AutonomousAgent {
         taskId: task.id,
         branch: input.branch,
       });
-      const testsPassed = testResult.passed === true;
+      testsPassed = testResult.passed === true;
       lastTestDetails = String(testResult.details ?? "No test details were returned.");
       events.push({
         type: "test",
@@ -252,6 +254,19 @@ export class AutonomousAgent {
             lastTestDetails = details;
           }
         }
+        events.push({
+          type: "test",
+          taskId: task.id,
+          passed: false,
+          details: lastTestDetails,
+        });
+      }
+
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        lastFindings = [`Attempt ${attempt} failed unexpectedly: ${message}`];
+        lastTestDetails = lastFindings[0];
+        testsPassed = false;
         events.push({
           type: "test",
           taskId: task.id,
