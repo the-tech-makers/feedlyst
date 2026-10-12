@@ -18,15 +18,35 @@ async function vercel(path: string) {
   return text ? JSON.parse(text) : {};
 }
 
+function previewUrl(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error("A preview deployment URL is required.");
+  }
+  const url = new URL(value.startsWith("https://") ? value : `https://${value}`);
+  if (
+    url.protocol !== "https:" ||
+    !url.hostname.endsWith(".vercel.app") ||
+    url.username ||
+    url.password ||
+    url.port
+  ) {
+    throw new Error("Preview verification is restricted to HTTPS Vercel preview domains.");
+  }
+  return url;
+}
+
 export function createVercelTools(): Map<AgentTool["name"], AgentTool> {
   const tools = new Map<AgentTool["name"], AgentTool>();
 
   tools.set("deployment.create_preview", {
     name: "deployment.create_preview",
     async execute(input) {
-      const branch = String(input.branch);
+      const branch = typeof input.branch === "string" ? input.branch : "";
+      if (!branch) throw new Error("deployment.create_preview requires a branch.");
       for (let attempt = 0; attempt < 30; attempt++) {
-        const result = await vercel(`/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=20`);
+        const result = await vercel(
+          `/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=20`,
+        );
         const deployment = (result.deployments ?? []).find(
           (item: { meta?: { githubCommitRef?: string }; target?: string }) =>
             item.meta?.githubCommitRef === branch && item.target !== "production",
@@ -41,7 +61,8 @@ export function createVercelTools(): Map<AgentTool["name"], AgentTool> {
   tools.set("deployment.inspect", {
     name: "deployment.inspect",
     async execute(input) {
-      const deploymentId = String(input.deploymentId);
+      const deploymentId = typeof input.deploymentId === "string" ? input.deploymentId : "";
+      if (!deploymentId) throw new Error("deployment.inspect requires a deployment ID.");
       const result = await vercel(`/v13/deployments/${encodeURIComponent(deploymentId)}`);
       return {
         id: result.id,
@@ -55,11 +76,12 @@ export function createVercelTools(): Map<AgentTool["name"], AgentTool> {
   tools.set("deployment.verify", {
     name: "deployment.verify",
     async execute(input) {
-      const url = String(input.url);
-      const response = await fetch(`https://${url}`);
+      const url = previewUrl(input.url);
+      const response = await fetch(url, { redirect: "manual" });
       const html = await response.text();
+      const redirectIsSafe = response.status < 300 || response.status >= 400;
       return {
-        passed: response.ok,
+        passed: response.ok && redirectIsSafe,
         status: response.status,
         details: `Preview returned HTTP ${response.status}; received ${html.length} bytes.`,
       };
