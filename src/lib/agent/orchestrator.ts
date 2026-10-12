@@ -83,6 +83,36 @@ const defaultPolicy: AgentPolicy = {
   ]),
 };
 
+function inferRequiredApproval(title: string, objective: string): AgentApproval | undefined {
+  const taskText = `${title} ${objective}`.toLowerCase();
+  const mentionsProduction = taskText.includes("production") || taskText.includes("prod ");
+  const mentionsDeploy = taskText.includes("deploy") || taskText.includes("release");
+  if (mentionsProduction && mentionsDeploy) return "production_deploy";
+
+  const mentionsDatabaseChange =
+    taskText.includes("database") ||
+    taskText.includes("schema") ||
+    taskText.includes("migration") ||
+    taskText.includes("table");
+  const mentionsDestructiveAction =
+    taskText.includes("drop ") ||
+    taskText.includes("truncate") ||
+    taskText.includes("destroy") ||
+    taskText.includes("delete all") ||
+    taskText.includes("irreversible");
+  if (mentionsDatabaseChange && mentionsDestructiveAction) return "destructive_migration";
+
+  const mentionsSensitiveOperations =
+    taskText.includes("credential") ||
+    taskText.includes("api key") ||
+    taskText.includes("secret") ||
+    taskText.includes("billing") ||
+    taskText.includes("payment");
+  if (mentionsSensitiveOperations) return "billing_or_credentials";
+
+  return undefined;
+}
+
 export class AutonomousAgent {
   constructor(
     private readonly model: AgentModel,
@@ -114,16 +144,19 @@ export class AutonomousAgent {
       failedAttempts: events,
     });
 
+    // Enforce critical approval gates in code, not only through the model's plan.
+    const requiredApproval = plan.requiresApproval ??
+      inferRequiredApproval(plan.task.title, plan.task.objective);
     const task: AgentTask = {
       ...plan.task,
       id: crypto.randomUUID(),
       status: "PENDING",
       attempts: 0,
-      approvals: plan.requiresApproval ? [plan.requiresApproval] : [],
+      approvals: requiredApproval ? [requiredApproval] : [],
     };
 
-    if (plan.requiresApproval && this.policy.approvals.has(plan.requiresApproval)) {
-      events.push({ type: "approval", taskId: task.id, reason: plan.requiresApproval });
+    if (requiredApproval && this.policy.approvals.has(requiredApproval)) {
+      events.push({ type: "approval", taskId: task.id, reason: requiredApproval });
       task.status = "BLOCKED";
       return events;
     }
