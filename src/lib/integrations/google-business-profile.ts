@@ -40,7 +40,7 @@ async function googleGet<T>(url: string, accessToken: string): Promise<T> {
     } catch {
       // Keep the HTTP status when Google returns a non-JSON error response.
     }
-    const safeDetail = detail.replace(/[\\r\\n]+/g, " ").slice(0, 160);
+    const safeDetail = detail.replace(/[\r\n]+/g, " ").slice(0, 160);
     throw new Error(`GOOGLE_API_${response.status}${safeDetail ? `:${safeDetail}` : ""}`);
   }
   return response.json() as Promise<T>;
