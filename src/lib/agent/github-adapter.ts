@@ -226,7 +226,12 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
           `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&event=pull_request&per_page=20`,
         );
         const run = (runs.workflow_runs ?? []).find(
-          (candidate: { head_sha?: string }) => candidate.head_sha === headSha,
+          (candidate: {
+            head_sha?: string;
+            pull_requests?: Array<{ head?: { sha?: string } }>;
+          }) =>
+            candidate.head_sha === headSha ||
+            candidate.pull_requests?.some((pullRequest) => pullRequest.head?.sha === headSha),
         );
         if (run?.status === "completed") {
           return {
