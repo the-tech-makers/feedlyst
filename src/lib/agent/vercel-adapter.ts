@@ -43,18 +43,31 @@ export function createVercelTools(): Map<AgentTool["name"], AgentTool> {
     async execute(input) {
       const branch = typeof input.branch === "string" ? input.branch : "";
       if (!branch) throw new Error("deployment.create_preview requires a branch.");
-      for (let attempt = 0; attempt < 30; attempt++) {
+
+      let latestDeployment: Record<string, unknown> | undefined;
+      for (let attempt = 0; attempt < 45; attempt++) {
         const result = await vercel(
           `/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=20`,
         );
-        const deployment = (result.deployments ?? []).find(
-          (item: { meta?: { githubCommitRef?: string }; target?: string }) =>
-            item.meta?.githubCommitRef === branch && item.target !== "production",
-        );
-        if (deployment) return { deployment };
+        const matching = (result.deployments ?? [])
+          .filter(
+            (item: { meta?: { githubCommitRef?: string }; target?: string }) =>
+              item.meta?.githubCommitRef === branch && item.target !== "production",
+          )
+          .sort((a: { created?: number }, b: { created?: number }) => (b.created ?? 0) - (a.created ?? 0));
+
+        if (matching.length > 0) {
+          latestDeployment = matching[0] as Record<string, unknown>;
+          const state = String(latestDeployment.state ?? latestDeployment.readyState ?? "").toUpperCase();
+          if (["READY", "ERROR", "CANCELED", "CANCELLED", "BLOCKED"].includes(state)) {
+            return { deployment: latestDeployment };
+          }
+        }
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
-      throw new Error("No Vercel preview deployment appeared for the agent branch.");
+
+      if (latestDeployment) return { deployment: latestDeployment };
+      throw new Error("No Vercel preview deployment appeared for the agent branch within 90 seconds.");
     },
   });
 
