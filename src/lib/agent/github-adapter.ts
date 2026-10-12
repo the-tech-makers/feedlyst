@@ -209,44 +209,43 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
       const branch = typeof input.branch === "string" ? input.branch : "";
       if (!branch) throw new Error("tests.run requires a branch.");
 
-      const workflow = "Agent Verify";
+      // Use the repository's default-branch CI workflow. A workflow_dispatch request
+      // cannot reliably run a workflow file that exists only on this feature branch.
       const workflows = await github("/actions/workflows");
-      const target = workflows.workflows?.find((w: { name: string }) => w.name === workflow);
-      if (!target) throw new Error("Agent Verify workflow not found.");
+      const target = workflows.workflows?.find((w: { name: string }) => w.name === "CI");
+      if (!target) throw new Error("CI workflow not found on the repository default branch.");
 
-      const before = await github(
-        `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&per_page=20`,
-      );
-      const known = new Set((before.workflow_runs ?? []).map((run: { id: number }) => run.id));
+      const ref = await github(`/git/ref/heads/${encodePath(branch)}`);
+      const headSha = ref.object?.sha;
+      if (typeof headSha !== "string" || !headSha) {
+        throw new Error(`Could not resolve the latest commit for branch: ${branch}`);
+      }
 
-      await github(`/actions/workflows/${target.id}/dispatches`, {
-        method: "POST",
-        body: JSON.stringify({ ref: branch, inputs: { ref: branch } }),
-      });
-
-      for (let attempt = 0; attempt < 45; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      for (let attempt = 0; attempt < 90; attempt++) {
         const runs = await github(
-          `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&per_page=20`,
+          `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&event=pull_request&per_page=20`,
         );
         const run = (runs.workflow_runs ?? []).find(
-          (candidate: { id: number }) => !known.has(candidate.id),
+          (candidate: { head_sha?: string }) => candidate.head_sha === headSha,
         );
-        if (!run) continue;
-
-        if (run.status === "completed") {
+        if (run?.status === "completed") {
           return {
             passed: run.conclusion === "success",
-            details: `Agent Verify workflow ${run.conclusion}. Run ${run.id}.`,
+            details: `CI workflow ${run.conclusion}. Run ${run.id}; commit ${headSha.slice(0, 7)}.`,
             workflowRunId: run.id,
+            commitSha: headSha,
           };
         }
+        if (run?.status === "in_progress" || run?.status === "queued") {
+          // Continue polling the same commit until CI completes.
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       return {
         passed: false,
-        details: "Agent Verify workflow did not complete within 90 seconds.",
-        workflowDispatched: true,
+        details: `CI did not complete for commit ${headSha.slice(0, 7)} within 180 seconds.`,
+        commitSha: headSha,
       };
     },
   });
