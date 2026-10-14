@@ -209,8 +209,8 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
       const branch = typeof input.branch === "string" ? input.branch : "";
       if (!branch) throw new Error("tests.run requires a branch.");
 
-      // Use the repository's default-branch CI workflow. A workflow_dispatch request
-      // cannot reliably run a workflow file that exists only on this feature branch.
+      // Agent edits push commits directly to an agent/* branch. Wait for the push-triggered
+      // CI run for the exact branch head instead of assuming a pull request already exists.
       const workflows = await github("/actions/workflows");
       const target = workflows.workflows?.find((w: { name: string }) => w.name === "CI");
       if (!target) throw new Error("CI workflow not found on the repository default branch.");
@@ -223,15 +223,10 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
 
       for (let attempt = 0; attempt < 90; attempt++) {
         const runs = await github(
-          `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&event=pull_request&per_page=20`,
+          `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&event=push&per_page=20`,
         );
         const run = (runs.workflow_runs ?? []).find(
-          (candidate: {
-            head_sha?: string;
-            pull_requests?: Array<{ head?: { sha?: string } }>;
-          }) =>
-            candidate.head_sha === headSha ||
-            candidate.pull_requests?.some((pullRequest) => pullRequest.head?.sha === headSha),
+          (candidate: { head_sha?: string }) => candidate.head_sha === headSha,
         );
         if (run?.status === "completed") {
           return {
