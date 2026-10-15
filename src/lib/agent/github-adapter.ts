@@ -41,7 +41,7 @@ function validateEdit(edit: unknown): asserts edit is { path: string; content: s
     normalizedPath === "package.json" ||
     normalizedPath === "prisma/schema.prisma" ||
     normalizedPath.startsWith(".env") ||
-    /(^|\/)(package-lock\\.json|npm-shrinkwrap\\.json|pnpm-lock\\.yaml|yarn\\.lock)$/.test(normalizedPath);
+    /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock)$/.test(normalizedPath);
   if (protectedPath) {
     throw new Error(`Autonomous edits are not permitted for protected configuration or safety file: ${candidate.path}`);
   }
