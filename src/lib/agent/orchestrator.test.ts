@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+import { createGitHubTools } from "./github-adapter";
+
 import {
   AutonomousAgent,
   type AgentModel,
@@ -50,6 +52,24 @@ function makeTools(overrides: Partial<Record<AgentToolName, (input: Record<strin
   }
   return tools;
 }
+
+describe("GitHub agent adapter safety", () => {
+  it("rejects edits to agent guardrails and CI configuration before making API calls", async () => {
+    const tools = createGitHubTools();
+    const edit = tools.get("repository.edit");
+    expect(edit).toBeDefined();
+
+    await expect(edit!.execute({
+      branch: "agent/test",
+      edits: [{ path: ".github/workflows/ci.yml", content: "name: disabled" }],
+    })).rejects.toThrow("Autonomous edits are not permitted for protected configuration or safety file");
+
+    await expect(edit!.execute({
+      branch: "agent/test",
+      edits: [{ path: "src/lib/agent/orchestrator.ts", content: "export {};" }],
+    })).rejects.toThrow("Autonomous edits are not permitted for protected configuration or safety file");
+  });
+});
 
 describe("AutonomousAgent", () => {
   beforeEach(() => vi.clearAllMocks());
