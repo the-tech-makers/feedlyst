@@ -28,6 +28,23 @@ function validateEdit(edit: unknown): asserts edit is { path: string; content: s
   ) {
     throw new Error(`Unsafe repository edit path: ${candidate.path}`);
   }
+  const normalizedPath = candidate.path.replace(/\\/g, "/").toLowerCase();
+  const protectedPath =
+    normalizedPath.startsWith(".github/workflows/") ||
+    normalizedPath === ".github/workflows" ||
+    normalizedPath.startsWith("src/lib/agent/") ||
+    normalizedPath === "src/lib/agent" ||
+    normalizedPath.startsWith("src/app/api/agent/") ||
+    normalizedPath === "src/app/api/agent" ||
+    normalizedPath === "middleware.ts" ||
+    normalizedPath === "src/middleware.ts" ||
+    normalizedPath === "package.json" ||
+    normalizedPath === "prisma/schema.prisma" ||
+    normalizedPath.startsWith(".env") ||
+    /(^|\/)(package-lock\\.json|npm-shrinkwrap\\.json|pnpm-lock\\.yaml|yarn\\.lock)$/.test(normalizedPath);
+  if (protectedPath) {
+    throw new Error(`Autonomous edits are not permitted for protected configuration or safety file: ${candidate.path}`);
+  }
   if (typeof candidate.content !== "string") {
     throw new Error(`Repository edit content must be text: ${candidate.path}`);
   }
