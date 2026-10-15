@@ -6,7 +6,8 @@ export type AgentApproval =
   | "substantial_delete"
   | "billing_or_credentials"
   | "ambiguous_requirement"
-  | "repeated_failure";
+  | "repeated_failure"
+  | "protected_file_edit";
 
 export type AgentTaskStatus = "PENDING" | "RUNNING" | "PASSED" | "FAILED" | "BLOCKED";
 
@@ -25,7 +26,8 @@ export type AgentEvent =
   | { type: "test"; taskId: string; passed: boolean; details: string }
   | { type: "review"; taskId: string; passed: boolean; findings: string[] }
   | { type: "approval"; taskId: string; reason: AgentApproval }
-  | { type: "complete"; taskId: string };
+  | { type: "complete"; taskId: string }
+  | { type: "blocked"; taskId: string; reason: string };
 
 export type AgentToolName =
   | "repository.create_branch"
@@ -80,6 +82,7 @@ const defaultPolicy: AgentPolicy = {
     "billing_or_credentials",
     "ambiguous_requirement",
     "repeated_failure",
+    "protected_file_edit",
   ]),
 };
 
@@ -267,6 +270,19 @@ export class AutonomousAgent {
 
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const isPolicyRejection =
+          message.includes("Autonomous edits are not permitted for protected configuration or safety file") ||
+          message.includes("Unsafe repository edit path:") ||
+          message.includes("Autonomous edits are only allowed on agent/* branches");
+
+        if (isPolicyRejection) {
+          const reason = `Task stopped because a proposed edit violates repository safety policy. ${message} No further retries were attempted. A human must review the requested change and make any required protected-file edits.`;
+          task.status = "BLOCKED";
+          events.push({ type: "approval", taskId: task.id, reason: "protected_file_edit" });
+          events.push({ type: "blocked", taskId: task.id, reason });
+          return events;
+        }
+
         lastFindings = [`Attempt ${attempt} failed unexpectedly: ${message}`];
         lastTestDetails = lastFindings[0];
         testsPassed = false;
