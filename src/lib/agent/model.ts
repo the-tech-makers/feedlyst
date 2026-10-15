@@ -25,6 +25,7 @@ async function complete(prompt: string): Promise<ModelResponse> {
 
   const response = await fetch(baseUrl.replace(/\/$/, "") + "/chat/completions", {
     method: "POST",
+    signal: AbortSignal.timeout(25_000),
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${apiKey}`,
