@@ -63,6 +63,15 @@ describe("AutonomousAgent", () => {
     expect(plan).not.toHaveBeenCalled();
   });
 
+  it("rejects non-agent branches before calling the model", async () => {
+    const plan = vi.fn();
+    const agent = new AutonomousAgent(makeModel({ plan }), makeTools());
+
+    await expect(agent.run({ goal: "Improve Feedlyst", repositorySummary: "repo", branch: "main" }))
+      .rejects.toThrow("The autonomous agent may only operate on a dedicated agent/* branch.");
+    expect(plan).not.toHaveBeenCalled();
+  });
+
   it("stops when the plan requests a protected action", async () => {
     const agent = new AutonomousAgent(
       makeModel({
