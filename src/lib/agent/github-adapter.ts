@@ -221,7 +221,7 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
         throw new Error(`Could not resolve the latest commit for branch: ${branch}`);
       }
 
-      for (let attempt = 0; attempt < 90; attempt++) {
+      for (let attempt = 0; attempt < 300; attempt++) {
         const runs = await github(
           `/actions/workflows/${target.id}/runs?branch=${encodeURIComponent(branch)}&event=push&per_page=20`,
         );
@@ -244,7 +244,7 @@ export function createGitHubTools(): Map<AgentTool["name"], AgentTool> {
 
       return {
         passed: false,
-        details: `CI did not complete for commit ${headSha.slice(0, 7)} within 180 seconds.`,
+        details: `CI did not complete for commit ${headSha.slice(0, 7)} within 600 seconds.`,
         commitSha: headSha,
       };
     },
