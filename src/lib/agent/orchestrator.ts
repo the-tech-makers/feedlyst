@@ -133,6 +133,9 @@ export class AutonomousAgent {
     branch: string;
   }): Promise<AgentEvent[]> {
     if (!input.branch.trim()) throw new Error("A target branch is required.");
+    if (!input.branch.startsWith("agent/") || input.branch.length <= "agent/".length) {
+      throw new Error("The autonomous agent may only operate on a dedicated agent/* branch.");
+    }
     if (!input.goal.trim()) throw new Error("A goal is required.");
     if (this.policy.maxAttemptsPerTask < 1) throw new Error("maxAttemptsPerTask must be at least 1.");
 
