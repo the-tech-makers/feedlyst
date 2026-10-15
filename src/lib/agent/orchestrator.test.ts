@@ -188,6 +188,38 @@ describe("AutonomousAgent", () => {
     expect(events.at(-1)).toEqual(expect.objectContaining({ type: "complete" }));
   });
 
+  it("blocks immediately and requests human review when an edit is rejected by safety policy", async () => {
+    const edit = vi.fn(async () => {
+      throw new Error("Autonomous edits are not permitted for protected configuration or safety file: .github/workflows/ci.yml");
+    });
+    const implement = vi.fn(async () => ({
+      edits: [{ path: ".github/workflows/ci.yml", content: "name: disabled" }],
+      summary: "Attempted to change CI",
+    }));
+    const agent = new AutonomousAgent(
+      makeModel({ implement }),
+      makeTools({ "repository.edit": edit }),
+    );
+
+    const events = await agent.run({
+      goal: "Improve Feedlyst",
+      repositorySummary: "repo",
+      branch: "agent/test",
+    });
+
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(implement).toHaveBeenCalledTimes(1);
+    expect(events).toContainEqual(expect.objectContaining({
+      type: "approval",
+      reason: "protected_file_edit",
+    }));
+    expect(events).toContainEqual(expect.objectContaining({
+      type: "blocked",
+      reason: expect.stringContaining("No further retries were attempted"),
+    }));
+    expect(events.some((event) => event.type === "complete")).toBe(false);
+  });
+
   it("does not report completion when preview verification fails", async () => {
     const agent = new AutonomousAgent(
       makeModel(),
